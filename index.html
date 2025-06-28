@@ -292,7 +292,7 @@
         .virtual-keyboard {
             display: none;
             position: fixed;
-            bottom: 10px;
+            bottom: 80px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 100;
@@ -303,16 +303,30 @@
             border: 2px solid rgba(255,255,255,0.2);
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);
             max-width: 90vw;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
         
-        .keyboard-row {
+        .vk-wasd {
             display: flex;
-            justify-content: center;
-            margin: 8px 0;
+            justify-content: space-between;
             gap: 8px;
         }
         
-        .keyboard-key {
+        .vk-func {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        
+        .vk-arrows {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        
+        .vk-btn {
             width: 55px;
             height: 55px;
             margin: 0;
@@ -331,33 +345,44 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
         
-        .keyboard-key:active {
+        .vk-btn:active {
             background: linear-gradient(145deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
             transform: scale(0.95);
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
         
-        .keyboard-key.wide {
+        .vk-btn.wide {
             width: 70px;
         }
         
-        .keyboard-key.space {
+        .vk-btn.space {
             width: 180px;
             background: linear-gradient(145deg, rgba(220,53,69,0.7), rgba(173,40,49,0.5));
             border-color: rgba(220,53,69,0.5);
         }
         
-        .keyboard-key.space:active {
+        .vk-btn.space:active {
             background: linear-gradient(145deg, rgba(173,40,49,0.8), rgba(220,53,69,0.6));
         }
         
-        .keyboard-key.control {
+        .vk-btn.control {
             background: linear-gradient(145deg, rgba(255,193,7,0.7), rgba(255,193,7,0.3));
             border-color: rgba(255,193,7,0.5);
         }
         
-        .keyboard-key.control:active {
+        .vk-btn.control:active {
             background: linear-gradient(145deg, rgba(255,193,7,0.8), rgba(255,193,7,0.4));
+        }
+        
+        .vk-btn.action {
+            background: linear-gradient(145deg, rgba(220,53,69,0.6), rgba(173,40,49,0.4));
+            border-color: rgba(220,53,69,0.5);
+            width: 70px;
+        }
+        
+        .vk-btn.action:active {
+            background: linear-gradient(145deg, rgba(173,40,49,0.7), rgba(220,53,69,0.5));
+            border-color: rgba(220,53,69,0.7);
         }
         
         @media (max-width: 768px) {
@@ -442,22 +467,22 @@
                 padding: 15px;
             }
             
-            .keyboard-key {
+            .vk-btn {
                 width: 45px;
                 height: 45px;
                 font-size: 16px;
                 border-radius: 10px;
             }
             
-            .keyboard-key.wide {
+            .vk-btn.wide {
                 width: 55px;
             }
             
-            .keyboard-key.space {
+            .vk-btn.space {
                 width: 140px;
             }
             
-            .keyboard-row {
+            .vk-arrows {
                 margin: 6px 0;
                 gap: 6px;
             }
@@ -639,35 +664,25 @@
     </div>
 
     <div class="virtual-keyboard" id="virtualKeyboard">
-        <!-- 第一行：WASD -->
-        <div class="keyboard-row">
-            <div class="keyboard-key" data-key="w">W</div>
+        <!-- 左下角WASD -->
+        <div class="vk-wasd">
+            <div class="vk-w vk-btn" data-key="w">W</div>
+            <div class="vk-a vk-btn" data-key="a">A</div>
+            <div class="vk-s vk-btn" data-key="s">S</div>
+            <div class="vk-d vk-btn" data-key="d">D</div>
         </div>
-        <div class="keyboard-row">
-            <div class="keyboard-key" data-key="a">A</div>
-            <div class="keyboard-key" data-key="s">S</div>
-            <div class="keyboard-key" data-key="d">D</div>
+        <!-- 右下角功能键 -->
+        <div class="vk-func">
+            <div class="vk-fire vk-btn action" data-key=" " id="shootKeyBtn">射击</div>
+            <div class="vk-pause vk-btn action" data-key="p" id="pauseKeyBtn">暂停</div>
+            <div class="vk-switch vk-btn control" id="switchBackBtn">🎮</div>
         </div>
-        
-        <!-- 第二行：方向键 -->
-        <div class="keyboard-row">
-            <div class="keyboard-key wide" data-key="arrowup">↑</div>
-        </div>
-        <div class="keyboard-row">
-            <div class="keyboard-key wide" data-key="arrowleft">←</div>
-            <div class="keyboard-key wide" data-key="arrowright">→</div>
-        </div>
-        <div class="keyboard-row">
-            <div class="keyboard-key wide" data-key="arrowdown">↓</div>
-        </div>
-        
-        <!-- 第三行：射击和功能键 -->
-        <div class="keyboard-row">
-            <div class="keyboard-key space" data-key=" " id="shootKeyBtn">射击</div>
-        </div>
-        <div class="keyboard-row">
-            <div class="keyboard-key" data-key="p" id="pauseKeyBtn">暂停</div>
-            <div class="keyboard-key control" id="switchBackBtn">🎮</div>
+        <!-- 底部横排方向键 -->
+        <div class="vk-arrows">
+            <div class="vk-arrow vk-btn wide" data-key="arrowleft">←</div>
+            <div class="vk-arrow vk-btn wide" data-key="arrowdown">↓</div>
+            <div class="vk-arrow vk-btn wide" data-key="arrowup">↑</div>
+            <div class="vk-arrow vk-btn wide" data-key="arrowright">→</div>
         </div>
     </div>
 
@@ -1005,7 +1020,12 @@
         function resizeCanvas() {
             const container = document.querySelector('.game-area');
             const containerWidth = container.clientWidth - 40;
-            const containerHeight = window.innerHeight * 0.5; // 减少高度，为移动端控制留出空间
+            
+            // 检测是否为移动设备
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            // 移动端需要为控制元素留出更多空间
+            const containerHeight = isMobile ? window.innerHeight * 0.4 : window.innerHeight * 0.5;
             
             const aspectRatio = 800 / 600;
             let newWidth = containerWidth;
@@ -1030,7 +1050,7 @@
             WIDTH = newWidth;
             HEIGHT = newHeight;
             
-            console.log('Canvas尺寸已调整:', WIDTH, 'x', HEIGHT);
+            console.log('Canvas尺寸已调整:', WIDTH, 'x', HEIGHT, '设备类型:', isMobile ? '移动端' : '桌面端');
         }
         
         // 工具函数
@@ -1734,7 +1754,7 @@
             }
             
             // 虚拟键盘事件
-            const keyboardKeys = document.querySelectorAll('.keyboard-key[data-key]');
+            const keyboardKeys = document.querySelectorAll('.vk-btn[data-key]');
             keyboardKeys.forEach(key => {
                 const keyValue = key.getAttribute('data-key');
                 
