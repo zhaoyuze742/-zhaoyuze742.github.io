@@ -81,10 +81,6 @@ MIT License - 详见 LICENSE 文件
 - 皮肤系统
 - 生命值显示
 
-## 许可证
-
-MIT License
-
 ## 联系方式
 
-如有问题或建议，请提交Issue或Pull Request。 
+如有问题或建议，请提交zhaoyuze223@outlook.com
