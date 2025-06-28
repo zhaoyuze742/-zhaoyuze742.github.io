@@ -208,7 +208,9 @@ let availableSkins = [
 let items = [];
 let PLAYER_SPEED_BASE = 3;
 let PLAYER_SPEED_BOOST = 5;
-let playerHP = 1;
+let playerHP = 3;
+let enemiesDefeated = 0;
+let enemiesToWin = 10;
 
 function initGame() {
     player = new Tank(WIDTH/2 - TANK_SIZE/2, HEIGHT - TANK_SIZE - 10, getSkinColor(currentSkin), true);
@@ -223,7 +225,10 @@ function initGame() {
     gameState = 'playing';
     hideGameOverPanel();
     resetItems();
-    playerHP = 1;
+    playerHP = 3;
+    enemiesDefeated = 0;
+    updateHPDisplay();
+    updateProgressDisplay();
     // 2~5秒后随机生成道具
     setTimeout(spawnRandomItem, 2000 + Math.random()*3000);
 }
@@ -296,20 +301,22 @@ function gameLoop() {
     // --- 绘制道具 ---
     items.forEach(item => item.draw());
     // 玩家吃到道具
-    items.forEach(item => {
+    items = items.filter((item, index) => {
         if (item.active && rectsIntersect({x: player.x, y: player.y, size: player.size}, {x: item.x, y: item.y, size: item.size})) {
             if (item.type === 'shield') {
                 shieldActive = true;
                 shieldTimer = 300;
             } else if (item.type === 'heal') {
-                playerHP = 1;
+                playerHP = Math.min(playerHP + 1, 3);
                 healActive = true;
+                updateHPDisplay();
             } else if (item.type === 'speed') {
                 speedActive = true;
                 speedTimer = 240;
             }
-            item.active = false;
+            return false; // 移除已使用的道具
         }
+        return true; // 保留未使用的道具
     });
     // --- 玩家无敌/加速特效 ---
     if (shieldActive) {
@@ -371,21 +378,27 @@ function gameLoop() {
                     bullet.alive = false;
                     gold += 5;
                     updateGoldDisplay();
+                    enemiesDefeated++;
+                    updateProgressDisplay();
                     // 敌人被击败后立即刷新
                     setTimeout(() => {
                         enemies[idx] = new Tank(Math.random() * (WIDTH - TANK_SIZE), 50, '#f00');
                     }, 400);
+                    if (enemiesDefeated >= enemiesToWin) {
+                        showGameOverPanel('胜利！');
+                        gameState = 'over';
+                        return;
+                    }
                 }
             });
         } else {
             if (player.alive && rectsIntersect(bullet, player)) {
                 if (!shieldActive) {
-                    if (playerHP > 1) {
-                        playerHP--;
-                        bullet.alive = false;
-                    } else {
+                    playerHP--;
+                    bullet.alive = false;
+                    updateHPDisplay();
+                    if (playerHP <= 0) {
                         player.alive = false;
-                        bullet.alive = false;
                     }
                 } else {
                     bullet.alive = false;
@@ -404,11 +417,6 @@ function gameLoop() {
         gameState = 'over';
         return;
     }
-    if (enemies.every(e => !e.alive)) {
-        showGameOverPanel('胜利！');
-        gameState = 'over';
-        return;
-    }
 
     frameCount++;
     requestAnimationFrame(gameLoop);
@@ -417,6 +425,16 @@ function gameLoop() {
 function updateGoldDisplay() {
     const goldDisplay = document.getElementById('goldDisplay');
     if (goldDisplay) goldDisplay.textContent = '金币：' + gold;
+}
+
+function updateHPDisplay() {
+    const hpDisplay = document.getElementById('hpDisplay');
+    if (hpDisplay) hpDisplay.textContent = '生命：' + playerHP;
+}
+
+function updateProgressDisplay() {
+    const progressDisplay = document.getElementById('progressDisplay');
+    if (progressDisplay) progressDisplay.textContent = '进度：' + enemiesDefeated + '/' + enemiesToWin;
 }
 
 // --- 商城逻辑 ---
@@ -489,7 +507,7 @@ window.buyItem = function(type) {
     updateGoldDisplay();
     // 立即生效
     if (type === 'shield') { shieldActive = true; shieldTimer = 300; }
-    if (type === 'heal') { playerHP = 1; healActive = true; }
+    if (type === 'heal') { playerHP = Math.min(playerHP + 1, 3); healActive = true; updateHPDisplay(); }
     if (type === 'speed') { speedActive = true; speedTimer = 240; }
     alert('购买成功，已生效！');
 };
