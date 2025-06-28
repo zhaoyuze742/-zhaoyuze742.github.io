@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>坦克大战 - 完整版</title>
+    <title>坦克大战</title>
     <style>
         * {
             box-sizing: border-box;
@@ -175,15 +175,16 @@
         
         .mobile-controls {
             display: none;
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            position: relative;
+            margin-top: 20px;
             z-index: 100;
             background: rgba(0,0,0,0.3);
             border-radius: 15px;
             padding: 10px;
             backdrop-filter: blur(10px);
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
         }
         
         .control-btn {
@@ -424,6 +425,34 @@
             cursor: pointer;
             font-size: 16px;
         }
+        
+        .language-switcher {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .lang-btn {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .lang-btn:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.5);
+        }
+        
+        .lang-btn.active {
+            background: #007bff;
+            border-color: #007bff;
+        }
     </style>
 </head>
 <body>
@@ -441,6 +470,10 @@
     <div class="container">
         <div class="game-area">
             <h1>坦克大战</h1>
+            <div class="language-switcher">
+                <button onclick="switchLanguage('zh')" class="lang-btn active">中文</button>
+                <button onclick="switchLanguage('en')" class="lang-btn">English</button>
+            </div>
             <div class="topbar">
                 <span id="goldDisplay">金币：0</span>
                 <div class="hp-container" id="hpContainer">
@@ -454,6 +487,22 @@
                 <button id="shopBtn">商城</button>
             </div>
             <canvas id="gameCanvas" width="800" height="600"></canvas>
+            <div class="mobile-controls">
+                <div class="control-row">
+                    <div class="control-left">
+                        <div class="control-btn" id="upBtn">↑</div>
+                        <div class="control-center">
+                            <div class="control-btn" id="leftBtn">←</div>
+                            <div class="control-btn" id="rightBtn">→</div>
+                        </div>
+                        <div class="control-btn" id="downBtn">↓</div>
+                    </div>
+                    <div class="control-right">
+                        <div class="control-btn fire-btn" id="fireBtn">🔥</div>
+                        <div class="control-btn" id="switchBtn" style="font-size: 16px; margin-top: 10px;">⌨️</div>
+                    </div>
+                </div>
+            </div>
             <div id="gameOverPanel" class="panel hidden">
                 <div id="gameOverText"></div>
                 <button id="restartBtn">重来</button>
@@ -506,23 +555,6 @@
         <button id="closeShopBtn">关闭</button>
     </div>
 
-    <div class="mobile-controls">
-        <div class="control-row">
-            <div class="control-left">
-                <div class="control-btn" id="upBtn">↑</div>
-                <div class="control-center">
-                    <div class="control-btn" id="leftBtn">←</div>
-                    <div class="control-btn" id="rightBtn">→</div>
-                </div>
-                <div class="control-btn" id="downBtn">↓</div>
-            </div>
-            <div class="control-right">
-                <div class="control-btn fire-btn" id="fireBtn">🔥</div>
-                <div class="control-btn" id="switchBtn" style="font-size: 16px; margin-top: 10px;">⌨️</div>
-            </div>
-        </div>
-    </div>
-
     <div class="virtual-keyboard" id="virtualKeyboard">
         <!-- 第一行：WASD -->
         <div class="keyboard-row">
@@ -548,10 +580,10 @@
         
         <!-- 第三行：射击和功能键 -->
         <div class="keyboard-row">
-            <div class="keyboard-key space" data-key=" ">射击</div>
+            <div class="keyboard-key space" data-key=" " id="shootKeyBtn">射击</div>
         </div>
         <div class="keyboard-row">
-            <div class="keyboard-key" data-key="p">暂停</div>
+            <div class="keyboard-key" data-key="p" id="pauseKeyBtn">暂停</div>
             <div class="keyboard-key control" id="switchBackBtn">🎮</div>
         </div>
     </div>
@@ -597,6 +629,125 @@
         let speedTimer = 0;
         let gameMode = 'campaign';
         let maxHP = 3;
+        let currentLanguage = 'zh'; // 默认中文
+        
+        // 多语言文本
+        const texts = {
+            zh: {
+                title: '坦克大战',
+                welcome: '欢迎来到坦克大战！',
+                selectMode: '选择游戏模式：',
+                campaign: '闯关模式',
+                infinite: '无限模式',
+                gold: '金币：',
+                progress: '进度：',
+                defeated: '击败：',
+                mode: '闯关模式',
+                pause: '暂停',
+                continue: '继续',
+                shop: '商城',
+                close: '关闭',
+                restart: '重来',
+                menu: '主菜单',
+                victory: '胜利！',
+                gameOver: '游戏失败',
+                instructions: '游戏说明',
+                controls: '移动端控制',
+                items: '道具说明',
+                modes: '游戏模式',
+                moveKeys: '方向键或WASD控制移动',
+                shootKey: '空格键射击',
+                collectItems: '收集道具增强能力',
+                defeatEnemies: '击败敌人获得金币',
+                virtualJoystick: '🎮 虚拟摇杆模式',
+                virtualKeyboard: '⌨️ 虚拟键盘模式',
+                directionKeys: '• 方向键：控制坦克移动',
+                fireButton: '• 🔥 按钮：射击',
+                switchButton: '• ⌨️ 按钮：切换到虚拟键盘',
+                wasdKeys: '• WASD：移动控制',
+                arrowKeys: '• 方向键：移动控制',
+                shootButton: '• 射击：开火',
+                pauseButton: '• 暂停：暂停游戏',
+                backButton: '• 🎮 按钮：返回摇杆模式',
+                shield: '🛡️ 盾牌：无敌保护 (10金币)',
+                heal: '❤️ 回血：恢复1点生命 (1金币)',
+                speed: '⚡ 加速：提升移动速度 (12金币)',
+                campaignDesc: '闯关模式：击败10个敌人获胜',
+                infiniteDesc: '无限模式：尽可能击败更多敌人',
+                mobileTip: '📱 移动端控制说明',
+                mobileTipJoystick: '🎮 虚拟摇杆模式',
+                mobileTipKeyboard: '⌨️ 虚拟键盘模式',
+                mobileTipDirection: '• 使用方向键控制移动',
+                mobileTipFire: '• 点击🔥按钮射击',
+                mobileTipSwitch: '• 点击⌨️按钮切换到键盘模式',
+                mobileTipWASD: '• 使用WASD或方向键移动',
+                mobileTipShoot: '• 点击"射击"按钮开火',
+                mobileTipBack: '• 点击🎮按钮返回摇杆模式',
+                gotIt: '知道了',
+                shopTitle: '商城',
+                itemsTitle: '道具',
+                buy: '购买',
+                insufficientGold: '金币不足！',
+                purchaseSuccess: '购买成功！'
+            },
+            en: {
+                title: 'Tank Battle',
+                welcome: 'Welcome to Tank Battle!',
+                selectMode: 'Select Game Mode:',
+                campaign: 'Campaign Mode',
+                infinite: 'Infinite Mode',
+                gold: 'Gold: ',
+                progress: 'Progress: ',
+                defeated: 'Defeated: ',
+                mode: 'Campaign Mode',
+                pause: 'Pause',
+                continue: 'Continue',
+                shop: 'Shop',
+                close: 'Close',
+                restart: 'Restart',
+                menu: 'Main Menu',
+                victory: 'Victory!',
+                gameOver: 'Game Over',
+                instructions: 'Game Instructions',
+                controls: 'Mobile Controls',
+                items: 'Items',
+                modes: 'Game Modes',
+                moveKeys: 'Arrow keys or WASD to move',
+                shootKey: 'Spacebar to shoot',
+                collectItems: 'Collect items to enhance abilities',
+                defeatEnemies: 'Defeat enemies to earn gold',
+                virtualJoystick: '🎮 Virtual Joystick Mode',
+                virtualKeyboard: '⌨️ Virtual Keyboard Mode',
+                directionKeys: '• Direction keys: Control tank movement',
+                fireButton: '• 🔥 Button: Shoot',
+                switchButton: '• ⌨️ Button: Switch to keyboard',
+                wasdKeys: '• WASD: Movement control',
+                arrowKeys: '• Arrow keys: Movement control',
+                shootButton: '• Shoot: Fire',
+                pauseButton: '• Pause: Pause game',
+                backButton: '• 🎮 Button: Return to joystick',
+                shield: '🛡️ Shield: Invincible protection (10 gold)',
+                heal: '❤️ Heal: Restore 1 HP (1 gold)',
+                speed: '⚡ Speed: Increase movement speed (12 gold)',
+                campaignDesc: 'Campaign Mode: Defeat 10 enemies to win',
+                infiniteDesc: 'Infinite Mode: Defeat as many enemies as possible',
+                mobileTip: '📱 Mobile Control Instructions',
+                mobileTipJoystick: '🎮 Virtual Joystick Mode',
+                mobileTipKeyboard: '⌨️ Virtual Keyboard Mode',
+                mobileTipDirection: '• Use direction keys to control movement',
+                mobileTipFire: '• Tap 🔥 button to shoot',
+                mobileTipSwitch: '• Tap ⌨️ button to switch to keyboard',
+                mobileTipWASD: '• Use WASD or arrow keys to move',
+                mobileTipShoot: '• Tap "Shoot" button to fire',
+                mobileTipBack: '• Tap 🎮 button to return to joystick',
+                gotIt: 'Got it',
+                shopTitle: 'Shop',
+                itemsTitle: 'Items',
+                buy: 'Buy',
+                insufficientGold: 'Insufficient gold!',
+                purchaseSuccess: 'Purchase successful!'
+            }
+        };
         
         // 道具
         let availableItems = [
@@ -604,6 +755,136 @@
             { type: 'heal', name: '回血包', price: 1 },
             { type: 'speed', name: '加速器', price: 12 }
         ];
+        
+        // 语言切换函数
+        function switchLanguage(lang) {
+            currentLanguage = lang;
+            
+            // 更新按钮激活状态
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            updateAllTexts();
+        }
+        
+        // 获取当前语言的文本
+        function t(key) {
+            return texts[currentLanguage][key] || texts['en'][key] || key;
+        }
+        
+        // 更新所有文本
+        function updateAllTexts() {
+            // 更新标题
+            document.title = t('title') + ' - Complete Edition';
+            document.querySelector('h1').textContent = t('title');
+            
+            // 更新欢迎界面
+            document.querySelector('.welcome-content h2').textContent = t('welcome');
+            document.querySelector('.welcome-content p').textContent = t('selectMode');
+            document.querySelector('.mode-btn[onclick*="campaign"]').textContent = t('campaign');
+            document.querySelector('.mode-btn[onclick*="infinite"]').textContent = t('infinite');
+            
+            // 更新游戏界面
+            document.getElementById('goldDisplay').textContent = t('gold') + gold;
+            document.getElementById('modeDisplay').textContent = t('mode');
+            document.getElementById('pauseBtn').textContent = t('pause');
+            document.getElementById('shopBtn').textContent = t('shop');
+            document.getElementById('closeShopBtn').textContent = t('close');
+            document.getElementById('restartBtn').textContent = t('restart');
+            document.getElementById('menuBtn').textContent = t('menu');
+            
+            // 更新侧边栏
+            updateSidebarTexts();
+            
+            // 更新移动端提示
+            updateMobileTipTexts();
+            
+            // 更新进度显示
+            updateProgressDisplay();
+        }
+        
+        // 更新侧边栏文本
+        function updateSidebarTexts() {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                const h2Elements = sidebar.querySelectorAll('h2');
+                h2Elements[0].textContent = t('instructions');
+                h2Elements[1].textContent = t('controls');
+                h2Elements[2].textContent = t('items');
+                h2Elements[3].textContent = t('modes');
+                
+                const lists = sidebar.querySelectorAll('ul');
+                if (lists.length >= 4) {
+                    // 游戏说明
+                    const instructionList = lists[0];
+                    instructionList.innerHTML = `
+                        <li>${t('moveKeys')}</li>
+                        <li>${t('shootKey')}</li>
+                        <li>${t('collectItems')}</li>
+                        <li>${t('defeatEnemies')}</li>
+                    `;
+                    
+                    // 移动端控制
+                    const controlList = lists[1];
+                    controlList.innerHTML = `
+                        <li><strong>${t('virtualJoystick')}</strong></li>
+                        <li>${t('directionKeys')}</li>
+                        <li>${t('fireButton')}</li>
+                        <li>${t('switchButton')}</li>
+                        <br>
+                        <li><strong>${t('virtualKeyboard')}</strong></li>
+                        <li>${t('wasdKeys')}</li>
+                        <li>${t('arrowKeys')}</li>
+                        <li>${t('shootButton')}</li>
+                        <li>${t('pauseButton')}</li>
+                        <li>${t('backButton')}</li>
+                    `;
+                    
+                    // 道具说明
+                    const itemList = lists[2];
+                    itemList.innerHTML = `
+                        <li>${t('shield')}</li>
+                        <li>${t('heal')}</li>
+                        <li>${t('speed')}</li>
+                    `;
+                    
+                    // 游戏模式
+                    const modeList = lists[3];
+                    modeList.innerHTML = `
+                        <li><strong>${t('campaign')}：</strong>${t('campaignDesc')}</li>
+                        <li><strong>${t('infinite')}：</strong>${t('infiniteDesc')}</li>
+                    `;
+                }
+            }
+        }
+        
+        // 更新移动端提示文本
+        function updateMobileTipTexts() {
+            const tip = document.getElementById('mobileTip');
+            if (tip) {
+                tip.innerHTML = `
+                    <h3>${t('mobileTip')}</h3>
+                    <p><strong>${t('mobileTipJoystick')}</strong></p>
+                    <p>${t('mobileTipDirection')}</p>
+                    <p>${t('mobileTipFire')}</p>
+                    <p>${t('mobileTipSwitch')}</p>
+                    <br>
+                    <p><strong>${t('mobileTipKeyboard')}</strong></p>
+                    <p>${t('mobileTipWASD')}</p>
+                    <p>${t('mobileTipShoot')}</p>
+                    <p>${t('mobileTipBack')}</p>
+                    <button onclick="closeMobileTip()">${t('gotIt')}</button>
+                `;
+            }
+            
+            // 更新虚拟键盘按钮文本
+            const shootBtn = document.getElementById('shootKeyBtn');
+            const pauseBtn = document.getElementById('pauseKeyBtn');
+            if (shootBtn) shootBtn.textContent = currentLanguage === 'zh' ? '射击' : 'Shoot';
+            if (pauseBtn) pauseBtn.textContent = currentLanguage === 'zh' ? '暂停' : 'Pause';
+        }
         
         // 窗口大小自适应
         function resizeCanvas() {
@@ -779,7 +1060,7 @@
         window.selectMode = function(mode) {
             console.log('选择游戏模式:', mode);
             gameMode = mode;
-            document.getElementById('modeDisplay').textContent = mode === 'campaign' ? '闯关模式' : '无限模式';
+            document.getElementById('modeDisplay').textContent = mode === 'campaign' ? t('campaign') : t('infinite');
             document.getElementById('welcomeMask').style.display = 'none';
             
             // 确保Canvas尺寸正确
@@ -866,7 +1147,7 @@
         
         // 显示更新函数
         function updateGoldDisplay() {
-            document.getElementById('goldDisplay').textContent = '金币：' + gold;
+            document.getElementById('goldDisplay').textContent = t('gold') + gold;
         }
         
         function updateHPDisplay() {
@@ -885,9 +1166,9 @@
         
         function updateProgressDisplay() {
             if (gameMode === 'campaign') {
-                document.getElementById('progressDisplay').textContent = '进度：' + enemiesDefeated + '/' + enemiesToWin;
+                document.getElementById('progressDisplay').textContent = t('progress') + enemiesDefeated + '/' + enemiesToWin;
             } else {
-                document.getElementById('progressDisplay').textContent = '击败：' + enemiesDefeated;
+                document.getElementById('progressDisplay').textContent = t('defeated') + enemiesDefeated;
             }
         }
         
@@ -903,13 +1184,13 @@
         // 商城功能
         function renderShopPanel() {
             const shopContent = document.getElementById('shopContent');
-            let html = '<h3>道具</h3>';
+            let html = '<h3>' + t('itemsTitle') + '</h3>';
             
             availableItems.forEach(item => {
                 html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;margin:5px 0;background:rgba(255,255,255,0.1);border-radius:8px;">
                     <span>${item.name}</span>
-                    <span>${item.price}金币</span>
-                    <button onclick="buyItem('${item.type}')">购买</button>
+                    <span>${item.price}${currentLanguage === 'zh' ? '金币' : ' gold'}</span>
+                    <button onclick="buyItem('${item.type}')">${t('buy')}</button>
                 </div>`;
             });
             
@@ -920,7 +1201,7 @@
         window.buyItem = function(type) {
             const item = availableItems.find(i => i.type === type);
             if (!item || gold < item.price) {
-                alert('金币不足！');
+                alert(t('insufficientGold'));
                 return;
             }
             
@@ -942,7 +1223,7 @@
                     break;
             }
             
-            alert('购买成功！');
+            alert(t('purchaseSuccess'));
         };
         
         // 主游戏循环
@@ -1088,7 +1369,7 @@
                             updateProgressDisplay();
                             
                             if (gameMode === 'campaign' && enemiesDefeated >= enemiesToWin) {
-                                showGameOverPanel('胜利！');
+                                showGameOverPanel(t('victory'));
                                 gameState = 'over';
                                 return;
                             }
@@ -1120,7 +1401,7 @@
             });
 
             if (!player.alive) {
-                showGameOverPanel('游戏失败');
+                showGameOverPanel(t('gameOver'));
                 gameState = 'over';
                 return;
             }
@@ -1263,7 +1544,7 @@
         // 按钮事件
         document.getElementById('pauseBtn').onclick = () => {
             pause = !pause;
-            document.getElementById('pauseBtn').textContent = pause ? '继续' : '暂停';
+            document.getElementById('pauseBtn').textContent = pause ? t('continue') : t('pause');
             if (!pause) requestAnimationFrame(gameLoop);
         };
         
@@ -1296,6 +1577,7 @@
         resizeCanvas();
         setupMobileControls();
         setupMobileOptimization();
+        updateAllTexts(); // 初始化文本
         
         // 确保DOM加载完成后初始化游戏
         document.addEventListener('DOMContentLoaded', function() {
