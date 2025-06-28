@@ -2,6 +2,10 @@
 
 一个基于HTML5 Canvas的经典坦克大战游戏，使用纯JavaScript开发。
 
+## 📄 许可证
+
+MIT License - 详见 LICENSE 文件
+
 ## 游戏特色
 
 - 🎮 经典坦克大战玩法
