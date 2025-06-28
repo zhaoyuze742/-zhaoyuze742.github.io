@@ -251,51 +251,67 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 100;
-            background: rgba(0,0,0,0.8);
-            border-radius: 15px;
-            padding: 15px;
-            backdrop-filter: blur(10px);
+            background: rgba(0,0,0,0.85);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(255,255,255,0.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
         }
         
         .keyboard-row {
             display: flex;
             justify-content: center;
-            margin: 5px 0;
+            margin: 8px 0;
+            gap: 8px;
         }
         
         .keyboard-key {
-            width: 50px;
-            height: 50px;
-            margin: 3px;
-            border-radius: 8px;
-            background: rgba(255,255,255,0.2);
-            border: 2px solid rgba(255,255,255,0.3);
+            width: 55px;
+            height: 55px;
+            margin: 0;
+            border-radius: 12px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+            border: 2px solid rgba(255,255,255,0.2);
             color: white;
-            font-size: 16px;
+            font-size: 18px;
+            font-weight: bold;
             display: flex;
             align-items: center;
             justify-content: center;
             user-select: none;
             touch-action: manipulation;
             transition: all 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
         
         .keyboard-key:active {
-            background: rgba(255,255,255,0.4);
+            background: linear-gradient(145deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
             transform: scale(0.95);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
         
         .keyboard-key.wide {
-            width: 80px;
+            width: 70px;
         }
         
         .keyboard-key.space {
-            width: 200px;
-            background: rgba(220,53,69,0.6);
+            width: 180px;
+            background: linear-gradient(145deg, rgba(220,53,69,0.7), rgba(173,40,49,0.5));
+            border-color: rgba(220,53,69,0.5);
         }
         
         .keyboard-key.space:active {
-            background: rgba(173,40,49,0.8);
+            background: linear-gradient(145deg, rgba(173,40,49,0.8), rgba(220,53,69,0.6));
+        }
+        
+        .keyboard-key.control {
+            background: linear-gradient(145deg, rgba(255,193,7,0.7), rgba(255,193,7,0.3));
+            border-color: rgba(255,193,7,0.5);
+        }
+        
+        .keyboard-key.control:active {
+            background: linear-gradient(145deg, rgba(255,193,7,0.8), rgba(255,193,7,0.4));
         }
         
         @media (max-width: 768px) {
@@ -346,19 +362,67 @@
                 font-size: 20px;
             }
             
+            .virtual-keyboard {
+                bottom: 10px;
+                padding: 15px;
+            }
+            
             .keyboard-key {
-                width: 40px;
-                height: 40px;
-                font-size: 14px;
+                width: 45px;
+                height: 45px;
+                font-size: 16px;
+                border-radius: 10px;
             }
             
             .keyboard-key.wide {
-                width: 60px;
+                width: 55px;
             }
             
             .keyboard-key.space {
-                width: 150px;
+                width: 140px;
             }
+            
+            .keyboard-row {
+                margin: 6px 0;
+                gap: 6px;
+            }
+        }
+        
+        .mobile-tip {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 2000;
+            max-width: 300px;
+            border: 2px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .mobile-tip h3 {
+            margin: 0 0 15px 0;
+            color: #007bff;
+        }
+        
+        .mobile-tip p {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        
+        .mobile-tip button {
+            margin-top: 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
         }
     </style>
 </head>
@@ -408,10 +472,17 @@
             
             <h2>移动端控制</h2>
             <ul>
-                <li>🎮 虚拟摇杆：基础移动控制</li>
-                <li>⌨️ 虚拟键盘：完整键盘功能</li>
-                <li>🔥 射击按钮：快速射击</li>
-                <li>点击⌨️按钮切换控制模式</li>
+                <li><strong>🎮 虚拟摇杆模式</strong></li>
+                <li>• 方向键：控制坦克移动</li>
+                <li>• 🔥 按钮：射击</li>
+                <li>• ⌨️ 按钮：切换到虚拟键盘</li>
+                <br>
+                <li><strong>⌨️ 虚拟键盘模式</strong></li>
+                <li>• WASD：移动控制</li>
+                <li>• 方向键：移动控制</li>
+                <li>• 射击：开火</li>
+                <li>• 暂停：暂停游戏</li>
+                <li>• 🎮 按钮：返回摇杆模式</li>
             </ul>
             
             <h2>道具说明</h2>
@@ -453,37 +524,50 @@
     </div>
 
     <div class="virtual-keyboard" id="virtualKeyboard">
+        <!-- 第一行：WASD -->
         <div class="keyboard-row">
             <div class="keyboard-key" data-key="w">W</div>
-            <div class="keyboard-key" data-key="e">E</div>
-            <div class="keyboard-key" data-key="r">R</div>
         </div>
         <div class="keyboard-row">
             <div class="keyboard-key" data-key="a">A</div>
             <div class="keyboard-key" data-key="s">S</div>
             <div class="keyboard-key" data-key="d">D</div>
         </div>
-        <div class="keyboard-row">
-            <div class="keyboard-key" data-key="z">Z</div>
-            <div class="keyboard-key" data-key="x">X</div>
-            <div class="keyboard-key" data-key="c">C</div>
-        </div>
+        
+        <!-- 第二行：方向键 -->
         <div class="keyboard-row">
             <div class="keyboard-key wide" data-key="arrowup">↑</div>
-            <div class="keyboard-key wide" data-key="arrowdown">↓</div>
         </div>
         <div class="keyboard-row">
             <div class="keyboard-key wide" data-key="arrowleft">←</div>
             <div class="keyboard-key wide" data-key="arrowright">→</div>
         </div>
         <div class="keyboard-row">
+            <div class="keyboard-key wide" data-key="arrowdown">↓</div>
+        </div>
+        
+        <!-- 第三行：射击和功能键 -->
+        <div class="keyboard-row">
             <div class="keyboard-key space" data-key=" ">射击</div>
         </div>
         <div class="keyboard-row">
-            <div class="keyboard-key" data-key="p">P</div>
-            <div class="keyboard-key" data-key="escape">ESC</div>
-            <div class="keyboard-key" id="switchBackBtn" style="background: rgba(255,193,7,0.6);">🎮</div>
+            <div class="keyboard-key" data-key="p">暂停</div>
+            <div class="keyboard-key control" id="switchBackBtn">🎮</div>
         </div>
+    </div>
+
+    <div class="mobile-tip" id="mobileTip" style="display: none;">
+        <h3>📱 移动端控制说明</h3>
+        <p><strong>🎮 虚拟摇杆模式</strong></p>
+        <p>• 使用方向键控制移动</p>
+        <p>• 点击🔥按钮射击</p>
+        <p>• 点击⌨️按钮切换到键盘模式</p>
+        <br>
+        <p><strong>⌨️ 虚拟键盘模式</strong></p>
+        <p>• 使用WASD或方向键移动</p>
+        <p>• 点击"射击"按钮开火</p>
+        <p>• 点击🎮按钮返回摇杆模式</p>
+        <button onclick="closeMobileTip()">知道了</button>
     </div>
 
     <script>
@@ -1254,8 +1338,30 @@
                 }
             }, { passive: false });
             
+            // 显示移动端提示
+            showMobileTip();
+            
             console.log('移动端优化已设置');
         }
+        
+        // 显示移动端提示
+        function showMobileTip() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                const tip = document.getElementById('mobileTip');
+                if (tip) {
+                    tip.style.display = 'block';
+                }
+            }
+        }
+        
+        // 关闭移动端提示
+        window.closeMobileTip = function() {
+            const tip = document.getElementById('mobileTip');
+            if (tip) {
+                tip.style.display = 'none';
+            }
+        };
     </script>
 </body>
 </html> 
