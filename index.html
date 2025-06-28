@@ -181,76 +181,112 @@
         
         .mobile-controls {
             display: none;
-            position: relative;
-            margin-top: 10px;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
             z-index: 100;
-            background: rgba(0,0,0,0.3);
-            border-radius: 15px;
-            padding: 8px;
-            backdrop-filter: blur(10px);
-            width: fit-content;
-            margin-left: auto;
-            margin-right: auto;
-            max-width: 90%;
-            order: 1;
+            pointer-events: none;
         }
         
-        .control-btn {
+        .control-left {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 120px;
+            height: 120px;
+            pointer-events: auto;
+        }
+        
+        .control-right {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            pointer-events: auto;
+        }
+        
+        .joystick-area {
+            width: 120px;
+            height: 120px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 50%;
+            position: relative;
+            border: 3px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .joystick-stick {
             width: 50px;
             height: 50px;
+            background: rgba(255,255,255,0.8);
             border-radius: 50%;
-            background: rgba(0,123,255,0.8);
-            border: 3px solid #fff;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid rgba(255,255,255,0.5);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: all 0.1s ease;
+        }
+        
+        .joystick-stick.active {
+            background: rgba(255,255,255,1);
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .action-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.4);
+            border: 3px solid rgba(255,255,255,0.4);
             color: white;
-            font-size: 20px;
-            margin: 3px;
+            font-size: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
             user-select: none;
             touch-action: manipulation;
             transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
         
-        .control-btn:active {
-            background: rgba(0,86,179,0.8);
+        .action-btn:active {
+            background: rgba(0,0,0,0.6);
+            border-color: rgba(255,255,255,0.7);
             transform: scale(0.95);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
         }
         
-        .fire-btn {
+        .action-btn.fire {
+            background: rgba(220,53,69,0.6);
+            border-color: rgba(220,53,69,0.5);
+        }
+        
+        .action-btn.fire:active {
             background: rgba(220,53,69,0.8);
+            border-color: rgba(220,53,69,0.7);
         }
         
-        .fire-btn:active {
-            background: rgba(173,40,49,0.8);
+        .action-btn.switch {
+            background: rgba(108,117,125,0.6);
+            border-color: rgba(108,117,125,0.5);
+            font-size: 20px;
         }
         
-        .control-row {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .control-center {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .control-left {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-right: 15px;
-        }
-        
-        .control-right {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-left: 15px;
+        .action-btn.switch:active {
+            background: rgba(108,117,125,0.8);
+            border-color: rgba(108,117,125,0.7);
         }
         
         .virtual-keyboard {
@@ -339,9 +375,7 @@
             }
             
             .mobile-controls {
-                display: flex;
-                order: 1;
-                margin-top: 10px;
+                display: block;
             }
             
             .virtual-keyboard {
@@ -373,23 +407,34 @@
             }
             
             .mobile-controls {
-                margin-top: 5px;
-                padding: 5px;
-            }
-            
-            .control-btn {
-                width: 45px;
-                height: 45px;
-                font-size: 18px;
-                margin: 2px;
+                bottom: 15px;
+                left: 15px;
+                right: 15px;
             }
             
             .control-left {
-                margin-right: 10px;
+                width: 100px;
+                height: 100px;
             }
             
-            .control-right {
-                margin-left: 10px;
+            .joystick-area {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .joystick-stick {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .action-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+            
+            .action-btn.switch {
+                font-size: 16px;
             }
             
             .virtual-keyboard {
@@ -525,18 +570,15 @@
             </div>
             <canvas id="gameCanvas" width="800" height="600"></canvas>
             <div class="mobile-controls">
-                <div class="control-row">
-                    <div class="control-left">
-                        <div class="control-btn" id="upBtn">↑</div>
-                        <div class="control-center">
-                            <div class="control-btn" id="leftBtn">←</div>
-                            <div class="control-btn" id="rightBtn">→</div>
-                        </div>
-                        <div class="control-btn" id="downBtn">↓</div>
+                <div class="control-left">
+                    <div class="joystick-area">
+                        <div class="joystick-stick"></div>
                     </div>
-                    <div class="control-right">
-                        <div class="control-btn fire-btn" id="fireBtn">🔥</div>
-                        <div class="control-btn" id="switchBtn" style="font-size: 16px; margin-top: 10px;">⌨️</div>
+                </div>
+                <div class="control-right">
+                    <div class="action-buttons">
+                        <div class="action-btn fire">🔥</div>
+                        <div class="action-btn switch">⌨️</div>
                     </div>
                 </div>
             </div>
@@ -1496,50 +1538,173 @@
             }
             
             // 移动设备显示控制
-            document.querySelector('.mobile-controls').style.display = 'flex';
+            document.querySelector('.mobile-controls').style.display = 'block';
             document.querySelector('.virtual-keyboard').style.display = 'none';
             
-            // 基础控制按钮
-            const controls = {
-                'upBtn': { key: 'arrowup', action: () => { keys['arrowup'] = true; } },
-                'leftBtn': { key: 'arrowleft', action: () => { keys['arrowleft'] = true; } },
-                'rightBtn': { key: 'arrowright', action: () => { keys['arrowright'] = true; } },
-                'downBtn': { key: 'arrowdown', action: () => { keys['arrowdown'] = true; } },
-                'fireBtn': { key: ' ', action: () => { keys[' '] = true; } }
-            };
+            // 虚拟摇杆功能
+            setupJoystick();
             
-            // 设置基础控制按钮事件
-            Object.keys(controls).forEach(btnId => {
-                const btn = document.getElementById(btnId);
-                if (btn) {
-                    btn.addEventListener('touchstart', (e) => {
-                        e.preventDefault();
-                        controls[btnId].action();
-                    });
-                    
-                    btn.addEventListener('touchend', (e) => {
-                        e.preventDefault();
-                        keys[controls[btnId].key] = false;
-                    });
-                    
-                    btn.addEventListener('mousedown', (e) => {
-                        e.preventDefault();
-                        controls[btnId].action();
-                    });
-                    
-                    btn.addEventListener('mouseup', (e) => {
-                        e.preventDefault();
-                        keys[controls[btnId].key] = false;
-                    });
+            // 动作按钮
+            setupActionButtons();
+            
+            console.log('移动设备控制已设置');
+        }
+        
+        // 设置虚拟摇杆
+        function setupJoystick() {
+            const joystickArea = document.querySelector('.joystick-area');
+            const joystickStick = document.querySelector('.joystick-stick');
+            
+            if (!joystickArea || !joystickStick) return;
+            
+            let isJoystickActive = false;
+            let joystickCenter = { x: 0, y: 0 };
+            let joystickRadius = 35; // 摇杆移动半径
+            
+            // 获取摇杆中心位置
+            function updateJoystickCenter() {
+                const rect = joystickArea.getBoundingClientRect();
+                joystickCenter = {
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2
+                };
+            }
+            
+            // 处理摇杆移动
+            function handleJoystickMove(clientX, clientY) {
+                if (!isJoystickActive) return;
+                
+                const deltaX = clientX - joystickCenter.x;
+                const deltaY = clientY - joystickCenter.y;
+                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                
+                // 限制摇杆移动范围
+                const clampedDistance = Math.min(distance, joystickRadius);
+                const angle = Math.atan2(deltaY, deltaX);
+                
+                const moveX = Math.cos(angle) * clampedDistance;
+                const moveY = Math.sin(angle) * clampedDistance;
+                
+                // 更新摇杆位置
+                joystickStick.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px))`;
+                
+                // 根据摇杆位置设置移动方向
+                const threshold = 15; // 激活阈值
+                
+                // 重置所有方向
+                keys['arrowup'] = false;
+                keys['arrowdown'] = false;
+                keys['arrowleft'] = false;
+                keys['arrowright'] = false;
+                
+                // 根据摇杆位置激活相应方向
+                if (Math.abs(moveY) > threshold) {
+                    if (moveY < 0) {
+                        keys['arrowup'] = true;
+                    } else {
+                        keys['arrowdown'] = true;
+                    }
+                }
+                
+                if (Math.abs(moveX) > threshold) {
+                    if (moveX > 0) {
+                        keys['arrowright'] = true;
+                    } else {
+                        keys['arrowleft'] = true;
+                    }
+                }
+            }
+            
+            // 触摸事件
+            joystickArea.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                isJoystickActive = true;
+                joystickStick.classList.add('active');
+                updateJoystickCenter();
+                handleJoystickMove(e.touches[0].clientX, e.touches[0].clientY);
+            });
+            
+            joystickArea.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (isJoystickActive) {
+                    handleJoystickMove(e.touches[0].clientX, e.touches[0].clientY);
                 }
             });
             
-            // 切换按钮事件
-            const switchBtn = document.getElementById('switchBtn');
-            const switchBackBtn = document.getElementById('switchBackBtn');
+            joystickArea.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                isJoystickActive = false;
+                joystickStick.classList.remove('active');
+                joystickStick.style.transform = 'translate(-50%, -50%)';
+                
+                // 重置所有方向
+                keys['arrowup'] = false;
+                keys['arrowdown'] = false;
+                keys['arrowleft'] = false;
+                keys['arrowright'] = false;
+            });
+            
+            // 鼠标事件（用于测试）
+            joystickArea.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                isJoystickActive = true;
+                joystickStick.classList.add('active');
+                updateJoystickCenter();
+                handleJoystickMove(e.clientX, e.clientY);
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (isJoystickActive) {
+                    handleJoystickMove(e.clientX, e.clientY);
+                }
+            });
+            
+            document.addEventListener('mouseup', (e) => {
+                if (isJoystickActive) {
+                    isJoystickActive = false;
+                    joystickStick.classList.remove('active');
+                    joystickStick.style.transform = 'translate(-50%, -50%)';
+                    
+                    // 重置所有方向
+                    keys['arrowup'] = false;
+                    keys['arrowdown'] = false;
+                    keys['arrowleft'] = false;
+                    keys['arrowright'] = false;
+                }
+            });
+        }
+        
+        // 设置动作按钮
+        function setupActionButtons() {
+            const fireBtn = document.querySelector('.action-btn.fire');
+            const switchBtn = document.querySelector('.action-btn.switch');
             const mobileControls = document.querySelector('.mobile-controls');
             const virtualKeyboard = document.getElementById('virtualKeyboard');
             
+            // 射击按钮
+            if (fireBtn) {
+                fireBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    keys[' '] = true;
+                });
+                
+                fireBtn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    keys[' '] = false;
+                });
+                
+                fireBtn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    keys[' '] = true;
+                });
+                
+                fireBtn.addEventListener('mouseup', (e) => {
+                    e.preventDefault();
+                    keys[' '] = false;
+                });
+            }
+            
+            // 切换按钮
             if (switchBtn) {
                 switchBtn.addEventListener('click', () => {
                     mobileControls.style.display = 'none';
@@ -1553,16 +1718,18 @@
                 });
             }
             
+            // 虚拟键盘返回按钮
+            const switchBackBtn = document.getElementById('switchBackBtn');
             if (switchBackBtn) {
                 switchBackBtn.addEventListener('click', () => {
                     virtualKeyboard.style.display = 'none';
-                    mobileControls.style.display = 'flex';
+                    mobileControls.style.display = 'block';
                 });
                 
                 switchBackBtn.addEventListener('touchstart', (e) => {
                     e.preventDefault();
                     virtualKeyboard.style.display = 'none';
-                    mobileControls.style.display = 'flex';
+                    mobileControls.style.display = 'block';
                 });
             }
             
@@ -1600,8 +1767,6 @@
                     key.style.background = 'rgba(255,255,255,0.2)';
                 });
             });
-            
-            console.log('移动设备控制已设置');
         }
         
         // 事件监听
