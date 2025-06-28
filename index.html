@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>坦克大战小游戏</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="welcomeMask" class="welcome-mask">
+        <div class="welcome-content">
+            <h2>欢迎来到坦克大战！</h2>
+            <p>准备好开始战斗了吗？</p>
+            <button id="welcomeOkBtn">确定</button>
+        </div>
+    </div>
+    <div class="topbar">
+        <span id="goldDisplay">金币：0</span>
+        <button id="pauseBtn">暂停</button>
+        <button id="shopBtn">商城</button>
+    </div>
+    <div class="container-flex">
+        <div class="container">
+            <h1>坦克大战</h1>
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+            <div id="gameOverPanel" class="panel hidden">
+                <div id="gameOverText"></div>
+                <button id="restartBtn">重来</button>
+            </div>
+        </div>
+        <aside class="sidebar">
+            <h2>游戏说明</h2>
+            <ul>
+                <li>方向键或WASD控制移动</li>
+                <li>空格键射击</li>
+                <li>消灭所有敌人获胜</li>
+                <li>被击中则失败</li>
+            </ul>
+        </aside>
+    </div>
+    <div id="shopPanel" class="panel hidden"></div>
+    <footer>© 2025 坦克大战小游戏</footer>
+    <script src="main.js"></script>
+</body>
+</html> 
