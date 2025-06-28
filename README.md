@@ -44,31 +44,6 @@
 - **道具购买**: 无敌盾(10金币)、回血包(8金币)、加速器(12金币)
 - **皮肤购买**: 烈焰红(20金币)、深空蓝(20金币)
 
-## 文件结构
-
-```
-Tank-Battle/
-├── index.html      # 主游戏页面
-├── main.js         # 游戏逻辑代码
-├── style.css       # 样式文件
-├── test.html       # 功能测试页面
-└── README.md       # 说明文档
-```
-
-## 运行方法
-
-1. 直接打开 `index.html` 文件
-2. 或者使用本地服务器：
-   ```bash
-   # Python 3
-   python -m http.server 8000
-   
-   # Node.js
-   npx http-server
-   
-   # 然后在浏览器中访问 http://localhost:8000
-   ```
-
 ## 技术特性
 
 - 纯JavaScript开发，无需额外依赖
