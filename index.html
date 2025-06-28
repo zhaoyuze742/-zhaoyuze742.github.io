@@ -24,12 +24,17 @@
             display: flex;
             gap: 20px;
             flex-wrap: wrap;
+            min-height: 100vh;
         }
         
         .game-area {
             flex: 1;
             min-width: 300px;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            order: 0;
         }
         
         .sidebar {
@@ -57,6 +62,7 @@
             box-shadow: 0 0 24px #000;
             max-width: 100%;
             height: auto;
+            margin-bottom: 10px;
         }
         
         .panel {
@@ -176,26 +182,28 @@
         .mobile-controls {
             display: none;
             position: relative;
-            margin-top: 20px;
+            margin-top: 10px;
             z-index: 100;
             background: rgba(0,0,0,0.3);
             border-radius: 15px;
-            padding: 10px;
+            padding: 8px;
             backdrop-filter: blur(10px);
             width: fit-content;
             margin-left: auto;
             margin-right: auto;
+            max-width: 90%;
+            order: 1;
         }
         
         .control-btn {
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             background: rgba(0,123,255,0.8);
             border: 3px solid #fff;
             color: white;
-            font-size: 24px;
-            margin: 5px;
+            font-size: 20px;
+            margin: 3px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -235,29 +243,30 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-right: 20px;
+            margin-right: 15px;
         }
         
         .control-right {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-left: 20px;
+            margin-left: 15px;
         }
         
         .virtual-keyboard {
             display: none;
             position: fixed;
-            bottom: 20px;
+            bottom: 10px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 100;
             background: rgba(0,0,0,0.85);
             border-radius: 20px;
-            padding: 20px;
+            padding: 15px;
             backdrop-filter: blur(15px);
             border: 2px solid rgba(255,255,255,0.2);
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            max-width: 90vw;
         }
         
         .keyboard-row {
@@ -325,8 +334,14 @@
                 order: -1;
             }
             
+            .game-area {
+                order: 0;
+            }
+            
             .mobile-controls {
                 display: flex;
+                order: 1;
+                margin-top: 10px;
             }
             
             .virtual-keyboard {
@@ -357,10 +372,24 @@
                 padding: 20px;
             }
             
+            .mobile-controls {
+                margin-top: 5px;
+                padding: 5px;
+            }
+            
             .control-btn {
-                width: 50px;
-                height: 50px;
-                font-size: 20px;
+                width: 45px;
+                height: 45px;
+                font-size: 18px;
+                margin: 2px;
+            }
+            
+            .control-left {
+                margin-right: 10px;
+            }
+            
+            .control-right {
+                margin-left: 10px;
             }
             
             .virtual-keyboard {
@@ -453,6 +482,14 @@
             background: #007bff;
             border-color: #007bff;
         }
+        
+        .control-section {
+            display: none;
+        }
+        
+        .control-section.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -519,20 +556,24 @@
                 <li>击败敌人获得金币</li>
             </ul>
             
-            <h2>移动端控制</h2>
-            <ul>
-                <li><strong>🎮 虚拟摇杆模式</strong></li>
-                <li>• 方向键：控制坦克移动</li>
-                <li>• 🔥 按钮：射击</li>
-                <li>• ⌨️ 按钮：切换到虚拟键盘</li>
-                <br>
-                <li><strong>⌨️ 虚拟键盘模式</strong></li>
-                <li>• WASD：移动控制</li>
-                <li>• 方向键：移动控制</li>
-                <li>• 射击：开火</li>
-                <li>• 暂停：暂停游戏</li>
-                <li>• 🎮 按钮：返回摇杆模式</li>
-            </ul>
+            <div id="desktopControls" class="control-section">
+                <h2>电脑端控制</h2>
+                <ul>
+                    <li><strong>移动</strong>：方向键或WASD</li>
+                    <li><strong>射击</strong>：空格键</li>
+                    <li><strong>暂停</strong>：P键</li>
+                    <li><strong>商城</strong>：点击商城按钮</li>
+                </ul>
+            </div>
+            
+            <div id="mobileControls" class="control-section">
+                <h2>移动端控制</h2>
+                <ul>
+                    <li><strong>🎮 摇杆模式</strong>：方向键 + 射击</li>
+                    <li><strong>⌨️ 键盘模式</strong>：WASD + 方向键 + 射击</li>
+                    <li><strong>切换</strong>：点击⌨️按钮</li>
+                </ul>
+            </div>
             
             <h2>道具说明</h2>
             <ul>
@@ -590,15 +631,9 @@
 
     <div class="mobile-tip" id="mobileTip" style="display: none;">
         <h3>📱 移动端控制说明</h3>
-        <p><strong>🎮 虚拟摇杆模式</strong></p>
-        <p>• 使用方向键控制移动</p>
-        <p>• 点击🔥按钮射击</p>
-        <p>• 点击⌨️按钮切换到键盘模式</p>
-        <br>
-        <p><strong>⌨️ 虚拟键盘模式</strong></p>
-        <p>• 使用WASD或方向键移动</p>
-        <p>• 点击"射击"按钮开火</p>
-        <p>• 点击🎮按钮返回摇杆模式</p>
+        <p><strong>🎮 摇杆模式：方向键 + 射击</strong></p>
+        <p><strong>⌨️ 键盘模式：WASD + 方向键 + 射击</strong></p>
+        <p><strong>切换：点击⌨️按钮</strong></p>
         <button onclick="closeMobileTip()">知道了</button>
     </div>
 
@@ -653,22 +688,30 @@
                 gameOver: '游戏失败',
                 instructions: '游戏说明',
                 controls: '移动端控制',
+                desktopControls: '电脑端控制',
                 items: '道具说明',
                 modes: '游戏模式',
                 moveKeys: '方向键或WASD控制移动',
                 shootKey: '空格键射击',
                 collectItems: '收集道具增强能力',
                 defeatEnemies: '击败敌人获得金币',
+                desktopMove: '移动：方向键或WASD',
+                desktopShoot: '射击：空格键',
+                desktopPause: '暂停：P键',
+                desktopShop: '商城：点击商城按钮',
                 virtualJoystick: '🎮 虚拟摇杆模式',
                 virtualKeyboard: '⌨️ 虚拟键盘模式',
                 directionKeys: '• 方向键：控制坦克移动',
                 fireButton: '• 🔥 按钮：射击',
-                switchButton: '• ⌨️ 按钮：切换到虚拟键盘',
+                switchButton: '• ⌨️ 按钮：切换到键盘',
                 wasdKeys: '• WASD：移动控制',
                 arrowKeys: '• 方向键：移动控制',
                 shootButton: '• 射击：开火',
                 pauseButton: '• 暂停：暂停游戏',
                 backButton: '• 🎮 按钮：返回摇杆模式',
+                joystickMode: '🎮 摇杆模式：方向键 + 射击',
+                keyboardMode: '⌨️ 键盘模式：WASD + 方向键 + 射击',
+                switchMode: '切换：点击⌨️按钮',
                 shield: '🛡️ 盾牌：无敌保护 (10金币)',
                 heal: '❤️ 回血：恢复1点生命 (1金币)',
                 speed: '⚡ 加速：提升移动速度 (12金币)',
@@ -710,12 +753,17 @@
                 gameOver: 'Game Over',
                 instructions: 'Game Instructions',
                 controls: 'Mobile Controls',
+                desktopControls: 'Desktop Controls',
                 items: 'Items',
                 modes: 'Game Modes',
                 moveKeys: 'Arrow keys or WASD to move',
                 shootKey: 'Spacebar to shoot',
                 collectItems: 'Collect items to enhance abilities',
                 defeatEnemies: 'Defeat enemies to earn gold',
+                desktopMove: 'Move: Arrow keys or WASD',
+                desktopShoot: 'Shoot: Spacebar',
+                desktopPause: 'Pause: P key',
+                desktopShop: 'Shop: Click Shop button',
                 virtualJoystick: '🎮 Virtual Joystick Mode',
                 virtualKeyboard: '⌨️ Virtual Keyboard Mode',
                 directionKeys: '• Direction keys: Control tank movement',
@@ -726,6 +774,9 @@
                 shootButton: '• Shoot: Fire',
                 pauseButton: '• Pause: Pause game',
                 backButton: '• 🎮 Button: Return to joystick',
+                joystickMode: '🎮 Joystick Mode: Direction keys + Shoot',
+                keyboardMode: '⌨️ Keyboard Mode: WASD + Direction keys + Shoot',
+                switchMode: 'Switch: Tap ⌨️ Button',
                 shield: '🛡️ Shield: Invincible protection (10 gold)',
                 heal: '❤️ Heal: Restore 1 HP (1 gold)',
                 speed: '⚡ Speed: Increase movement speed (12 gold)',
@@ -761,10 +812,7 @@
             currentLanguage = lang;
             
             // 更新按钮激活状态
-            document.querySelectorAll('.lang-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
+            updateLanguageButtons();
             
             updateAllTexts();
         }
@@ -776,6 +824,9 @@
         
         // 更新所有文本
         function updateAllTexts() {
+            // 更新HTML lang属性
+            document.documentElement.lang = currentLanguage === 'zh' ? 'zh-CN' : 'en';
+            
             // 更新标题
             document.title = t('title') + ' - Complete Edition';
             document.querySelector('h1').textContent = t('title');
@@ -811,12 +862,52 @@
             if (sidebar) {
                 const h2Elements = sidebar.querySelectorAll('h2');
                 h2Elements[0].textContent = t('instructions');
-                h2Elements[1].textContent = t('controls');
-                h2Elements[2].textContent = t('items');
-                h2Elements[3].textContent = t('modes');
+                
+                // 根据设备类型更新控制说明
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                
+                if (isMobile) {
+                    // 移动端：更新移动端控制说明
+                    const mobileControlsH2 = document.querySelector('#mobileControls h2');
+                    if (mobileControlsH2) mobileControlsH2.textContent = t('controls');
+                    
+                    const mobileControlsList = document.querySelector('#mobileControls ul');
+                    if (mobileControlsList) {
+                        mobileControlsList.innerHTML = `
+                            <li><strong>${t('joystickMode')}</strong></li>
+                            <li><strong>${t('keyboardMode')}</strong></li>
+                            <li><strong>${t('switchMode')}</strong></li>
+                        `;
+                    }
+                } else {
+                    // 桌面端：更新桌面端控制说明
+                    const desktopControlsH2 = document.querySelector('#desktopControls h2');
+                    if (desktopControlsH2) desktopControlsH2.textContent = t('desktopControls');
+                    
+                    const desktopControlsList = document.querySelector('#desktopControls ul');
+                    if (desktopControlsList) {
+                        desktopControlsList.innerHTML = `
+                            <li><strong>${t('desktopMove')}</strong></li>
+                            <li><strong>${t('desktopShoot')}</strong></li>
+                            <li><strong>${t('desktopPause')}</strong></li>
+                            <li><strong>${t('desktopShop')}</strong></li>
+                        `;
+                    }
+                }
+                
+                // 更新其他部分
+                const itemsH2 = document.querySelector('#mobileControls').nextElementSibling;
+                if (itemsH2 && itemsH2.tagName === 'H2') {
+                    itemsH2.textContent = t('items');
+                }
+                
+                const modesH2 = itemsH2 ? itemsH2.nextElementSibling : null;
+                if (modesH2 && modesH2.tagName === 'H2') {
+                    modesH2.textContent = t('modes');
+                }
                 
                 const lists = sidebar.querySelectorAll('ul');
-                if (lists.length >= 4) {
+                if (lists.length >= 3) {
                     // 游戏说明
                     const instructionList = lists[0];
                     instructionList.innerHTML = `
@@ -826,36 +917,24 @@
                         <li>${t('defeatEnemies')}</li>
                     `;
                     
-                    // 移动端控制
-                    const controlList = lists[1];
-                    controlList.innerHTML = `
-                        <li><strong>${t('virtualJoystick')}</strong></li>
-                        <li>${t('directionKeys')}</li>
-                        <li>${t('fireButton')}</li>
-                        <li>${t('switchButton')}</li>
-                        <br>
-                        <li><strong>${t('virtualKeyboard')}</strong></li>
-                        <li>${t('wasdKeys')}</li>
-                        <li>${t('arrowKeys')}</li>
-                        <li>${t('shootButton')}</li>
-                        <li>${t('pauseButton')}</li>
-                        <li>${t('backButton')}</li>
-                    `;
+                    // 道具说明（跳过控制说明，因为已经单独处理）
+                    const itemList = lists[lists.length - 2]; // 倒数第二个ul
+                    if (itemList) {
+                        itemList.innerHTML = `
+                            <li>${t('shield')}</li>
+                            <li>${t('heal')}</li>
+                            <li>${t('speed')}</li>
+                        `;
+                    }
                     
-                    // 道具说明
-                    const itemList = lists[2];
-                    itemList.innerHTML = `
-                        <li>${t('shield')}</li>
-                        <li>${t('heal')}</li>
-                        <li>${t('speed')}</li>
-                    `;
-                    
-                    // 游戏模式
-                    const modeList = lists[3];
-                    modeList.innerHTML = `
-                        <li><strong>${t('campaign')}：</strong>${t('campaignDesc')}</li>
-                        <li><strong>${t('infinite')}：</strong>${t('infiniteDesc')}</li>
-                    `;
+                    // 游戏模式（最后一个ul）
+                    const modeList = lists[lists.length - 1];
+                    if (modeList) {
+                        modeList.innerHTML = `
+                            <li><strong>${t('campaign')}：</strong>${t('campaignDesc')}</li>
+                            <li><strong>${t('infinite')}：</strong>${t('infiniteDesc')}</li>
+                        `;
+                    }
                 }
             }
         }
@@ -866,15 +945,9 @@
             if (tip) {
                 tip.innerHTML = `
                     <h3>${t('mobileTip')}</h3>
-                    <p><strong>${t('mobileTipJoystick')}</strong></p>
-                    <p>${t('mobileTipDirection')}</p>
-                    <p>${t('mobileTipFire')}</p>
-                    <p>${t('mobileTipSwitch')}</p>
-                    <br>
-                    <p><strong>${t('mobileTipKeyboard')}</strong></p>
-                    <p>${t('mobileTipWASD')}</p>
-                    <p>${t('mobileTipShoot')}</p>
-                    <p>${t('mobileTipBack')}</p>
+                    <p><strong>${t('joystickMode')}</strong></p>
+                    <p><strong>${t('keyboardMode')}</strong></p>
+                    <p><strong>${t('switchMode')}</strong></p>
                     <button onclick="closeMobileTip()">${t('gotIt')}</button>
                 `;
             }
@@ -890,7 +963,7 @@
         function resizeCanvas() {
             const container = document.querySelector('.game-area');
             const containerWidth = container.clientWidth - 40;
-            const containerHeight = window.innerHeight * 0.6;
+            const containerHeight = window.innerHeight * 0.5; // 减少高度，为移动端控制留出空间
             
             const aspectRatio = 800 / 600;
             let newWidth = containerWidth;
@@ -1577,6 +1650,8 @@
         resizeCanvas();
         setupMobileControls();
         setupMobileOptimization();
+        detectSystemLanguage(); // 检测系统语言
+        setupControlDisplay(); // 设置控制说明显示
         updateAllTexts(); // 初始化文本
         
         // 确保DOM加载完成后初始化游戏
@@ -1644,6 +1719,58 @@
                 tip.style.display = 'none';
             }
         };
+
+        // 检测系统语言并设置
+        function detectSystemLanguage() {
+            const systemLang = navigator.language || navigator.userLanguage;
+            console.log('检测到系统语言:', systemLang);
+            console.log('navigator.language:', navigator.language);
+            console.log('navigator.userLanguage:', navigator.userLanguage);
+            console.log('navigator.languages:', navigator.languages);
+            
+            // 检查是否为中文
+            if (systemLang.startsWith('zh')) {
+                currentLanguage = 'zh';
+                console.log('设置为中文');
+            } else {
+                currentLanguage = 'en';
+                console.log('设置为英文');
+            }
+            
+            // 更新语言按钮状态
+            updateLanguageButtons();
+        }
+        
+        // 更新语言按钮状态
+        function updateLanguageButtons() {
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            const activeBtn = document.querySelector(`.lang-btn[onclick*="${currentLanguage}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+            }
+        }
+
+        // 检测设备类型并显示相应控制说明
+        function setupControlDisplay() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            console.log('设备类型检测:', isMobile ? '移动端' : '桌面端');
+            
+            const desktopControls = document.getElementById('desktopControls');
+            const mobileControls = document.getElementById('mobileControls');
+            
+            if (isMobile) {
+                // 移动端显示移动端控制
+                if (desktopControls) desktopControls.classList.remove('active');
+                if (mobileControls) mobileControls.classList.add('active');
+            } else {
+                // 桌面端显示桌面端控制
+                if (desktopControls) desktopControls.classList.add('active');
+                if (mobileControls) mobileControls.classList.remove('active');
+            }
+        }
     </script>
 </body>
 </html> 
