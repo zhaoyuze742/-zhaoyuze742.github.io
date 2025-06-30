@@ -1175,18 +1175,18 @@
                 ctx.lineWidth = 3;
                 ctx.strokeStyle = '#fff';
                 ctx.stroke();
-                ctx.font = '18px Arial';
+                ctx.font = '22px Arial';
                 ctx.fillStyle = '#fff';
                 ctx.textAlign = 'center';
                 
                 let text = '';
                 switch(this.type) {
-                    case 'shield': text = '盾'; break;
-                    case 'heal': text = '血'; break;
-                    case 'speed': text = '速'; break;
+                    case 'shield': text = '🛡️'; break;
+                    case 'heal': text = '❤️'; break;
+                    case 'speed': text = '⚡'; break;
                 }
                 
-                ctx.fillText(text, this.x + this.size/2, this.y + this.size/2 + 7);
+                ctx.fillText(text, this.x + this.size/2, this.y + this.size/2 + 8);
                 ctx.restore();
             }
         }
@@ -1253,7 +1253,7 @@
             if (gameState !== 'playing') return;
             
             // 增加边距，确保道具不会生成在边缘
-            const margin = 100; // 从60增加到100
+            const margin = 40;
             const itemSize = 32;
             
             // 确保道具完全在可视区域内
