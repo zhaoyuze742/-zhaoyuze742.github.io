@@ -886,6 +886,14 @@
                 if (saved) {
                     userAccounts = JSON.parse(saved);
                     console.log('账号数据加载成功，用户数量:', Object.keys(userAccounts).length);
+                    
+                    // 清理错误注册的管理员账号（用户名000但密码不是000的账号）
+                    if (userAccounts['000'] && userAccounts['000'].password !== '000') {
+                        console.log('发现错误注册的管理员账号，正在清理...');
+                        delete userAccounts['000'];
+                        saveAccounts();
+                        console.log('错误的管理员账号已清理');
+                    }
                 } else {
                     console.log('没有找到保存的账号数据，将创建新的账号系统');
                 }
@@ -1018,6 +1026,12 @@
                     return;
                 }
                 
+                // 禁止注册管理员用户名
+                if (username === '000') {
+                    messageDiv.textContent = '不能使用管理员用户名';
+                    return;
+                }
+                
                 if (userAccounts[username]) {
                     messageDiv.textContent = '用户名已存在';
                     return;
@@ -1069,8 +1083,12 @@
                     return;
                 }
                 
-                // 不允许删除管理员账号
+                // 不允许删除管理员账号（只有真正的管理员才能删除）
                 if (username === '000') {
+                    if (password !== '000') {
+                        messageDiv.textContent = '管理员账号密码错误，无法删除';
+                        return;
+                    }
                     messageDiv.textContent = '不能删除管理员账号';
                     return;
                 }
@@ -1321,6 +1339,8 @@
                 }
             }
         };
+        
+
         
         // 皮肤系统
         let currentSkin = 'default'; // 当前皮肤
