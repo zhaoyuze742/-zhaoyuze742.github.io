@@ -311,7 +311,7 @@
         .vk-wasd {
             display: flex;
             justify-content: space-between;
-            gap: 8px;
+            gap: 12px;
         }
         
         .vk-func {
@@ -327,14 +327,14 @@
         }
         
         .vk-btn {
-            width: 55px;
+            width: 70px;
             height: 55px;
             margin: 0;
             border-radius: 12px;
             background: linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
             border: 2px solid rgba(255,255,255,0.2);
             color: white;
-            font-size: 18px;
+            font-size: 14px;
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -468,9 +468,9 @@
             }
             
             .vk-btn {
-                width: 45px;
+                width: 60px;
                 height: 45px;
-                font-size: 16px;
+                font-size: 12px;
                 border-radius: 10px;
             }
             
@@ -560,16 +560,130 @@
         .control-section.active {
             display: block;
         }
+        
+        .multiplayer-panel {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .connection-status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .connection-status.connected {
+            background: rgba(40, 167, 69, 0.3);
+            color: #28a745;
+        }
+        
+        .connection-status.connecting {
+            background: rgba(255, 193, 7, 0.3);
+            color: #ffc107;
+        }
+        
+        .connection-status.disconnected {
+            background: rgba(220, 53, 69, 0.3);
+            color: #dc3545;
+        }
+        
+        .player-count {
+            margin: 10px 0;
+            font-size: 14px;
+            color: #ccc;
+        }
+        
+        .multiplayer-btn {
+            background: linear-gradient(145deg, #6f42c1, #5a32a3);
+        }
+        
+        .multiplayer-btn:hover {
+            background: linear-gradient(145deg, #5a32a3, #4a2b8a);
+        }
+        
+        .pointer-lock-hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            text-align: center;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .pointer-lock-hint.show {
+            opacity: 1;
+        }
+        
+        .pointer-lock-hint.hide {
+            opacity: 0;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
-    <div id="welcomeMask" class="welcome-mask">
+                <div id="welcomeMask" class="welcome-mask">
         <div class="welcome-content">
             <h2>欢迎来到坦克大战！</h2>
-            <p>选择游戏模式：</p>
-            <div class="mode-selector">
-                <button class="mode-btn" onclick="selectMode('campaign')">闯关模式</button>
-                <button class="mode-btn" onclick="selectMode('infinite')">无限模式</button>
+            
+            <!-- 登录界面 -->
+            <div id="loginPanel">
+                <h3>请先登录</h3>
+                <div style="margin: 20px 0;">
+                    <input type="text" id="usernameInput" placeholder="用户名" style="width: 200px; padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid #ccc;">
+                    <br>
+                    <input type="password" id="passwordInput" placeholder="密码" style="width: 200px; padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid #ccc;">
+                    <br>
+                    <button onclick="login()" style="margin: 10px;">登录</button>
+                    <button onclick="register()" style="margin: 10px;">注册</button>
+                    <button onclick="deleteAccount()" style="margin: 10px; background: #dc3545;">删除账号</button>
+                    <br>
+                    <!-- <button onclick="createTestAccount()" style="margin: 10px; background: #28a745;">创建测试账号</button> -->
+                </div>
+                <div id="loginMessage" style="color: #ff4444; margin: 10px;"></div>
+            </div>
+            
+            <!-- 游戏模式选择界面 -->
+            <div id="modePanel" style="display: none;">
+                <p>欢迎，<span id="playerNameDisplay"></span>！</p>
+                <p>选择游戏模式：</p>
+                <div class="mode-selector">
+                    <button class="mode-btn" onclick="selectMode('infinite')">无限模式</button>
+                    <button class="mode-btn multiplayer-btn" onclick="selectMode('multiplayer')">多人联机</button>
+                </div>
+                <button onclick="logout()" style="margin-top: 20px; background: #dc3545;">退出登录</button>
             </div>
         </div>
     </div>
@@ -588,12 +702,15 @@
                     <div class="hp-heart"></div>
                     <div class="hp-heart"></div>
                 </div>
-                <span id="progressDisplay">进度：0/10</span>
-                <span id="modeDisplay">闯关模式</span>
+                <span id="progressDisplay">击败：0</span>
+                <span id="modeDisplay">无限模式</span>
                 <button id="pauseBtn">暂停</button>
                 <button id="shopBtn">商城</button>
             </div>
             <canvas id="gameCanvas" width="800" height="600"></canvas>
+            <div id="pointerLockHint" class="pointer-lock-hint">
+                <span id="pointerLockText">点击画布锁定鼠标 | 按ESC退出</span>
+            </div>
             <div class="mobile-controls">
                 <div class="control-left">
                     <div class="joystick-area">
@@ -615,12 +732,27 @@
         </div>
         
         <div class="sidebar">
+            <h2>账号信息</h2>
+            <div id="accountInfoPanel" style="background:rgba(255,255,255,0.07);border-radius:8px;padding:10px 15px;margin-bottom:15px;font-size:14px;line-height:1.7;">
+                <div><b>用户名：</b><span id="infoUsername">-</span></div>
+                <div><b>注册时间：</b><span id="infoCreated">-</span></div>
+                <div><b>最近登录：</b><span id="infoLastLogin">-</span></div>
+                <div><b>总游戏次数：</b><span id="infoGames">-</span></div>
+                <div><b>总击败数：</b><span id="infoDefeat">-</span></div>
+                <div><b>总金币获得：</b><span id="infoGold">-</span></div>
+                <div><b>成就：</b><span id="infoAchievements">-</span></div>
+            </div>
             <h2>游戏说明</h2>
             <ul>
-                <li>方向键或WASD控制移动</li>
+                <li>坦克自动朝向鼠标指针</li>
+                <li>点击画布锁定鼠标（桌面端）</li>
+                <li>W/S或上下方向键控制前进后退</li>
                 <li>空格键射击</li>
+                <li>撞击敌人坦克可消灭敌人</li>
                 <li>收集道具增强能力</li>
                 <li>击败敌人获得金币</li>
+                <li>多人模式：大世界地图，视野限制</li>
+                <li>障碍物：墙壁、岩石、树木</li>
             </ul>
             
             <div id="desktopControls" class="control-section">
@@ -651,8 +783,16 @@
             
             <h2>游戏模式</h2>
             <ul>
-                <li><strong>闯关模式：</strong>击败10个敌人获胜</li>
-                <li><strong>无限模式：</strong>尽可能击败更多敌人</li>
+                <li><strong>无限模式：</strong>小地图，击败更多敌人</li>
+                <li><strong>多人联机：</strong>大地图，视野限制，障碍物</li>
+            </ul>
+            
+            <h2>皮肤系统</h2>
+            <ul>
+                <li>在商城中购买和装备皮肤</li>
+                <li>不同皮肤有独特的视觉效果</li>
+                <li>彩虹皮肤有动态变色效果</li>
+                <li>击败敌人获得金币购买皮肤</li>
             </ul>
         </div>
     </div>
@@ -666,10 +806,10 @@
     <div class="virtual-keyboard" id="virtualKeyboard">
         <!-- 左下角WASD -->
         <div class="vk-wasd">
-            <div class="vk-w vk-btn" data-key="w">W</div>
-            <div class="vk-a vk-btn" data-key="a">A</div>
-            <div class="vk-s vk-btn" data-key="s">S</div>
-            <div class="vk-d vk-btn" data-key="d">D</div>
+            <div class="vk-w vk-btn" data-key="w">前进</div>
+            <div class="vk-a vk-btn" data-key="a">左转</div>
+            <div class="vk-s vk-btn" data-key="s">后退</div>
+            <div class="vk-d vk-btn" data-key="d">右转</div>
         </div>
         <!-- 右下角功能键 -->
         <div class="vk-func">
@@ -713,15 +853,532 @@
         let pause = false;
         let playerHP = 3;
         let enemiesDefeated = 0;
-        let enemiesToWin = 10;
         let items = [];
         let shieldActive = false;
         let shieldTimer = 0;
         let speedActive = false;
         let speedTimer = 0;
-        let gameMode = 'campaign';
+        let gameMode = 'infinite';
         let maxHP = 3;
         let currentLanguage = 'zh'; // 默认中文
+        let mouseX, mouseY; // 鼠标位置
+        let explosions = []; // 爆炸效果
+        let muzzleFlashes = []; // 发射闪光
+        
+        // 多人联机变量
+        let players = []; // 所有玩家（包括自己）
+        let myPlayerId = null;
+        let isMultiplayer = false;
+        let worldWidth = 2000; // 大场地宽度
+        let worldHeight = 1500; // 大场地高度
+        let cameraX = 0;
+        let cameraY = 0;
+        let aiPlayers = []; // AI玩家
+        let maxPlayers = 6; // 最大玩家数
+        
+        // 障碍物和视野系统
+        let obstacles = []; // 障碍物数组
+        let fogOfWar = true; // 战争迷雾
+        let visionRange = 200; // 视野范围
+        
+        // 账号系统
+        let currentPlayer = null; // 当前玩家信息
+        let playerName = ''; // 玩家名称
+        let isLoggedIn = false; // 登录状态
+        let userAccounts = {}; // 用户账号数据
+        let currentUsername = ''; // 当前登录的用户名
+        
+        // 游戏统计系统
+        let gameStats = {
+            totalGamesPlayed: 0,
+            totalEnemiesDefeated: 0,
+            totalGoldEarned: 0,
+            totalTimePlayed: 0,
+            bestScore: 0,
+            achievements: [],
+            lastLoginTime: null,
+            totalLoginCount: 0
+        };
+        
+        // 从localStorage加载账号数据
+        function loadAccounts() {
+            try {
+                const saved = localStorage.getItem('tankBattleAccounts');
+                if (saved) {
+                    userAccounts = JSON.parse(saved);
+                    console.log('账号数据加载成功，用户数量:', Object.keys(userAccounts).length);
+                } else {
+                    console.log('没有找到保存的账号数据，将创建新的账号系统');
+                }
+            } catch (error) {
+                console.error('加载账号数据时出错:', error);
+                userAccounts = {};
+            }
+        }
+        
+        // 保存账号数据到localStorage
+        function saveAccounts() {
+            localStorage.setItem('tankBattleAccounts', JSON.stringify(userAccounts));
+        }
+        
+        // 登录函数
+        window.login = function() {
+            try {
+                const username = document.getElementById('usernameInput').value.trim();
+                const password = document.getElementById('passwordInput').value.trim();
+                const messageDiv = document.getElementById('loginMessage');
+                
+                if (!username || !password) {
+                    messageDiv.textContent = '请输入用户名和密码';
+                    return;
+                }
+            
+            // 检查管理员账号
+            if (username === '000' && password === '000') {
+                // 管理员登录成功
+                isLoggedIn = true;
+                currentUsername = username;
+                playerName = '管理员';
+                // 延迟解锁所有皮肤，确保skins对象已定义
+                setTimeout(() => {
+                    if (typeof skins !== 'undefined') {
+                        unlockedSkins = Object.keys(skins);
+                    }
+                }, 100);
+                gold = 9999; // 给予大量金币
+                
+                showModePanel();
+                messageDiv.textContent = '';
+                messageDiv.style.color = '#00ff00';
+                messageDiv.textContent = '管理员登录成功！已解锁所有皮肤';
+                updateAccountInfoPanel();
+                return;
+            }
+            
+            // 检查普通账号
+            if (userAccounts[username]) {
+                if (userAccounts[username].password === password) {
+                    // 登录成功
+                    isLoggedIn = true;
+                    currentUsername = username;
+                    playerName = username;
+                    
+                    // 加载用户数据
+                    if (userAccounts[username].unlockedSkins) {
+                        unlockedSkins = userAccounts[username].unlockedSkins;
+                    }
+                    if (userAccounts[username].gold !== undefined) {
+                        gold = userAccounts[username].gold;
+                    }
+                    if (userAccounts[username].currentSkin) {
+                        currentSkin = userAccounts[username].currentSkin;
+                    }
+                    
+                    // 加载游戏统计
+                    if (userAccounts[username].stats) {
+                        gameStats = { ...userAccounts[username].stats };
+                    }
+                    
+                    // 更新登录统计
+                    gameStats.lastLoginTime = new Date().toISOString();
+                    gameStats.totalLoginCount++;
+                    
+                    // 保存更新后的统计
+                    userAccounts[username].stats = gameStats;
+                    saveAccounts();
+                    
+                    showModePanel();
+                    messageDiv.textContent = '';
+                    messageDiv.style.color = '#00ff00';
+                    messageDiv.textContent = '登录成功！';
+                    updateAccountInfoPanel();
+                } else {
+                    messageDiv.textContent = '密码错误';
+                }
+            } else {
+                messageDiv.textContent = '用户不存在，请先注册';
+            }
+            } catch (error) {
+                console.error('登录错误:', error);
+                const messageDiv = document.getElementById('loginMessage');
+                if (messageDiv) {
+                    messageDiv.textContent = '登录时发生错误，请重试';
+                }
+            }
+        };
+        
+        // 注册函数
+        window.register = function() {
+            try {
+                const username = document.getElementById('usernameInput').value.trim();
+                const password = document.getElementById('passwordInput').value.trim();
+                const messageDiv = document.getElementById('loginMessage');
+                
+                if (!username || !password) {
+                    messageDiv.textContent = '请输入用户名和密码';
+                    return;
+                }
+                
+                if (userAccounts[username]) {
+                    messageDiv.textContent = '用户名已存在';
+                    return;
+                }
+                
+                // 创建新账号
+                userAccounts[username] = {
+                    password: password,
+                    gold: 100, // 初始金币
+                    unlockedSkins: ['default'], // 默认皮肤
+                    currentSkin: 'default',
+                    createdAt: new Date().toISOString(),
+                    // 游戏统计信息
+                    stats: {
+                        totalGamesPlayed: 0,
+                        totalEnemiesDefeated: 0,
+                        totalGoldEarned: 0,
+                        totalTimePlayed: 0,
+                        bestScore: 0,
+                        achievements: [],
+                        lastLoginTime: null,
+                        totalLoginCount: 0,
+                        firstLoginTime: new Date().toISOString()
+                    }
+                };
+                
+                saveAccounts();
+                messageDiv.style.color = '#00ff00';
+                messageDiv.textContent = '注册成功！请登录';
+                updateAccountInfoPanel();
+            } catch (error) {
+                console.error('注册错误:', error);
+                const messageDiv = document.getElementById('loginMessage');
+                if (messageDiv) {
+                    messageDiv.textContent = '注册时发生错误，请重试';
+                }
+            }
+        };
+        
+        // 删除账号
+        window.deleteAccount = function() {
+            try {
+                const username = document.getElementById('usernameInput').value.trim();
+                const password = document.getElementById('passwordInput').value.trim();
+                const messageDiv = document.getElementById('loginMessage');
+                
+                if (!username || !password) {
+                    messageDiv.textContent = '请输入要删除的用户名和密码';
+                    return;
+                }
+                
+                // 不允许删除管理员账号
+                if (username === '000') {
+                    messageDiv.textContent = '不能删除管理员账号';
+                    return;
+                }
+                
+                // 检查账号是否存在
+                if (!userAccounts[username]) {
+                    messageDiv.textContent = '用户不存在';
+                    return;
+                }
+                
+                // 验证密码
+                if (userAccounts[username].password !== password) {
+                    messageDiv.textContent = '密码错误，无法删除账号';
+                    return;
+                }
+                
+                // 确认删除
+                if (!confirm(`确定要删除账号 "${username}" 吗？此操作不可恢复！`)) {
+                    return;
+                }
+                
+                // 删除账号
+                delete userAccounts[username];
+                saveAccounts();
+                
+                // 如果删除的是当前登录的账号，则退出登录
+                if (currentUsername === username) {
+                    logout();
+                }
+                
+                messageDiv.style.color = '#00ff00';
+                messageDiv.textContent = `账号 "${username}" 已成功删除`;
+                
+                // 清空输入框
+                document.getElementById('usernameInput').value = '';
+                document.getElementById('passwordInput').value = '';
+                
+                updateAccountInfoPanel();
+                
+            } catch (error) {
+                console.error('删除账号时出错:', error);
+                const messageDiv = document.getElementById('loginMessage');
+                if (messageDiv) {
+                    messageDiv.textContent = '删除账号时发生错误，请重试';
+                }
+            }
+        };
+        
+        // 退出登录
+        window.logout = function() {
+            // 保存当前用户数据
+            if (currentUsername && currentUsername !== '000') {
+                userAccounts[currentUsername].gold = gold;
+                userAccounts[currentUsername].unlockedSkins = unlockedSkins;
+                userAccounts[currentUsername].currentSkin = currentSkin;
+                userAccounts[currentUsername].stats = gameStats;
+                saveAccounts();
+            }
+            
+            // 重置状态
+            isLoggedIn = false;
+            currentUsername = '';
+            playerName = '';
+            gold = 0;
+            unlockedSkins = ['default'];
+            currentSkin = 'default';
+            gameStats = {
+                totalGamesPlayed: 0,
+                totalEnemiesDefeated: 0,
+                totalGoldEarned: 0,
+                totalTimePlayed: 0,
+                bestScore: 0,
+                achievements: [],
+                lastLoginTime: null,
+                totalLoginCount: 0
+            };
+            showLoginPanel();
+            updateAccountInfoPanel();
+        };
+        
+        // 显示登录界面
+        function showLoginPanel() {
+            document.getElementById('welcomeMask').style.display = 'flex';
+            document.getElementById('loginPanel').style.display = 'block';
+            document.getElementById('modePanel').style.display = 'none';
+            document.getElementById('loginMessage').textContent = '';
+        }
+        
+        // 显示模式选择界面
+        function showModePanel() {
+            document.getElementById('welcomeMask').style.display = 'flex';
+            document.getElementById('loginPanel').style.display = 'none';
+            document.getElementById('modePanel').style.display = 'block';
+            document.getElementById('playerNameDisplay').textContent = playerName;
+        }
+        
+        // 更新游戏统计
+        function updateGameStats() {
+            if (currentUsername && currentUsername !== '000' && userAccounts[currentUsername]) {
+                userAccounts[currentUsername].stats = gameStats;
+                saveAccounts();
+            }
+        }
+        
+        // 记录游戏开始
+        function recordGameStart() {
+            gameStats.totalGamesPlayed++;
+            updateGameStats();
+        }
+        
+        // 记录敌人击败
+        function recordEnemyDefeated() {
+            gameStats.totalEnemiesDefeated++;
+            updateGameStats();
+        }
+        
+        // 记录金币获得
+        function recordGoldEarned(amount) {
+            gameStats.totalGoldEarned += amount;
+            updateGameStats();
+        }
+        
+        // 记录最高分
+        function recordBestScore(score) {
+            if (score > gameStats.bestScore) {
+                gameStats.bestScore = score;
+                updateGameStats();
+            }
+        }
+        
+        // 检查成就
+        function checkAchievements() {
+            const newAchievements = [];
+            
+            // 击败敌人成就
+            if (gameStats.totalEnemiesDefeated >= 10 && !gameStats.achievements.includes('first_blood')) {
+                newAchievements.push('first_blood');
+            }
+            if (gameStats.totalEnemiesDefeated >= 50 && !gameStats.achievements.includes('veteran')) {
+                newAchievements.push('veteran');
+            }
+            if (gameStats.totalEnemiesDefeated >= 100 && !gameStats.achievements.includes('expert')) {
+                newAchievements.push('expert');
+            }
+            
+            // 游戏次数成就
+            if (gameStats.totalGamesPlayed >= 5 && !gameStats.achievements.includes('dedicated')) {
+                newAchievements.push('dedicated');
+            }
+            if (gameStats.totalGamesPlayed >= 20 && !gameStats.achievements.includes('addicted')) {
+                newAchievements.push('addicted');
+            }
+            
+            // 金币成就
+            if (gameStats.totalGoldEarned >= 1000 && !gameStats.achievements.includes('rich')) {
+                newAchievements.push('rich');
+            }
+            
+            // 添加新成就
+            if (newAchievements.length > 0) {
+                gameStats.achievements.push(...newAchievements);
+                updateGameStats();
+                
+                // 显示成就通知
+                newAchievements.forEach(achievement => {
+                    showAchievementNotification(achievement);
+                });
+            }
+        }
+        
+        // 显示成就通知
+        function showAchievementNotification(achievement) {
+            const achievementNames = {
+                'first_blood': '首次击杀',
+                'veteran': '老兵',
+                'expert': '专家',
+                'dedicated': '专注玩家',
+                'addicted': '游戏成瘾',
+                'rich': '富甲一方'
+            };
+            
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(45deg, #ff6b6b, #feca57);
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                z-index: 10000;
+                animation: slideIn 0.5s ease-out;
+                font-weight: bold;
+            `;
+            notification.innerHTML = `🏆 成就解锁：${achievementNames[achievement] || achievement}`;
+            
+            document.body.appendChild(notification);
+            
+            // 3秒后移除通知
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.5s ease-in';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 500);
+            }, 3000);
+        }
+        
+        // 创建测试账号
+        window.createTestAccount = function() {
+            try {
+                const testUsername = 'test' + Math.floor(Math.random() * 1000);
+                const testPassword = '123456';
+                
+                // 自动填充输入框
+                document.getElementById('usernameInput').value = testUsername;
+                document.getElementById('passwordInput').value = testPassword;
+                
+                // 创建账号
+                userAccounts[testUsername] = {
+                    password: testPassword,
+                    gold: 500, // 给予更多初始金币
+                    unlockedSkins: ['default', 'red', 'blue'], // 解锁几个皮肤
+                    currentSkin: 'default',
+                    createdAt: new Date().toISOString(),
+                    // 游戏统计信息
+                    stats: {
+                        totalGamesPlayed: 0,
+                        totalEnemiesDefeated: 0,
+                        totalGoldEarned: 0,
+                        totalTimePlayed: 0,
+                        bestScore: 0,
+                        achievements: [],
+                        lastLoginTime: null,
+                        totalLoginCount: 0,
+                        firstLoginTime: new Date().toISOString()
+                    }
+                };
+                
+                saveAccounts();
+                
+                const messageDiv = document.getElementById('loginMessage');
+                messageDiv.style.color = '#00ff00';
+                messageDiv.textContent = `测试账号创建成功！用户名: ${testUsername}，密码: ${testPassword}`;
+                
+                console.log('测试账号创建成功:', testUsername);
+            } catch (error) {
+                console.error('创建测试账号时出错:', error);
+                const messageDiv = document.getElementById('loginMessage');
+                if (messageDiv) {
+                    messageDiv.textContent = '创建测试账号时发生错误';
+                }
+            }
+        };
+        
+        // 皮肤系统
+        let currentSkin = 'default'; // 当前皮肤
+        let unlockedSkins = ['default']; // 已解锁的皮肤
+        let skins = {
+            default: {
+                name: '默认坦克',
+                color: '#0f0',
+                price: 0,
+                description: '经典绿色坦克'
+            },
+            red: {
+                name: '红色坦克',
+                color: '#ff4444',
+                price: 50,
+                description: '火红战斗坦克'
+            },
+            blue: {
+                name: '蓝色坦克',
+                color: '#4444ff',
+                price: 50,
+                description: '深海蓝坦克'
+            },
+            gold: {
+                name: '金色坦克',
+                color: '#ffaa00',
+                price: 100,
+                description: '土豪金坦克'
+            },
+            purple: {
+                name: '紫色坦克',
+                color: '#aa44ff',
+                price: 80,
+                description: '神秘紫坦克'
+            },
+            black: {
+                name: '黑色坦克',
+                color: '#333333',
+                price: 120,
+                description: '暗夜黑坦克'
+            },
+            rainbow: {
+                name: '彩虹坦克',
+                color: 'rainbow',
+                price: 200,
+                description: '炫彩彩虹坦克'
+            }
+        };
+        
+        // 多人联机变量
+        let socket = null;
         
         // 多语言文本
         const texts = {
@@ -729,12 +1386,10 @@
                 title: '坦克大战',
                 welcome: '欢迎来到坦克大战！',
                 selectMode: '选择游戏模式：',
-                campaign: '闯关模式',
                 infinite: '无限模式',
                 gold: '金币：',
                 progress: '进度：',
                 defeated: '击败：',
-                mode: '闯关模式',
                 pause: '暂停',
                 continue: '继续',
                 shop: '商城',
@@ -748,11 +1403,11 @@
                 desktopControls: '电脑端控制',
                 items: '道具说明',
                 modes: '游戏模式',
-                moveKeys: '方向键或WASD控制移动',
+                moveKeys: '坦克自动朝向鼠标指针，点击画布锁定鼠标，W/S或上下方向键控制前进后退，撞击敌人可消灭敌人',
                 shootKey: '空格键射击',
                 collectItems: '收集道具增强能力',
                 defeatEnemies: '击败敌人获得金币',
-                desktopMove: '移动：方向键或WASD',
+                desktopMove: '坦克自动朝向鼠标指针，点击画布锁定鼠标，移动：W/S或上下方向键，撞击敌人可消灭敌人',
                 desktopShoot: '射击：空格键',
                 desktopPause: '暂停：P键',
                 desktopShop: '商城：点击商城按钮',
@@ -766,21 +1421,20 @@
                 shootButton: '• 射击：开火',
                 pauseButton: '• 暂停：暂停游戏',
                 backButton: '• 🎮 按钮：返回摇杆模式',
-                joystickMode: '🎮 摇杆模式：方向键 + 射击',
-                keyboardMode: '⌨️ 键盘模式：WASD + 方向键 + 射击',
+                joystickMode: '🎮 摇杆模式：上下移动 + 左右旋转 + 射击',
+                keyboardMode: '⌨️ 键盘模式：A/D旋转 + W/S移动 + 射击',
                 switchMode: '切换：点击⌨️按钮',
                 shield: '🛡️ 盾牌：无敌保护 (10金币)',
                 heal: '❤️ 回血：恢复1点生命 (1金币)',
                 speed: '⚡ 加速：提升移动速度 (12金币)',
-                campaignDesc: '闯关模式：击败10个敌人获胜',
                 infiniteDesc: '无限模式：尽可能击败更多敌人',
                 mobileTip: '📱 移动端控制说明',
                 mobileTipJoystick: '🎮 虚拟摇杆模式',
                 mobileTipKeyboard: '⌨️ 虚拟键盘模式',
-                mobileTipDirection: '• 使用方向键控制移动',
+                mobileTipDirection: '• 摇杆上下控制移动，左右控制旋转',
                 mobileTipFire: '• 点击🔥按钮射击',
                 mobileTipSwitch: '• 点击⌨️按钮切换到键盘模式',
-                mobileTipWASD: '• 使用WASD或方向键移动',
+                mobileTipWASD: '• 使用A/D旋转，W/S移动',
                 mobileTipShoot: '• 点击"射击"按钮开火',
                 mobileTipBack: '• 点击🎮按钮返回摇杆模式',
                 gotIt: '知道了',
@@ -788,18 +1442,26 @@
                 itemsTitle: '道具',
                 buy: '购买',
                 insufficientGold: '金币不足！',
-                purchaseSuccess: '购买成功！'
+                purchaseSuccess: '购买成功！',
+                pointerLockHint: '点击画布锁定鼠标 | 按ESC退出',
+                multiplayer: '多人联机',
+                singlePlayer: '单人游戏',
+                connecting: '连接中...',
+                connected: '已连接',
+                disconnected: '连接断开',
+                waitingForPlayers: '等待玩家加入...',
+                playersOnline: '在线玩家：',
+                joinGame: '加入游戏',
+                createGame: '创建游戏'
             },
             en: {
                 title: 'Tank Battle',
                 welcome: 'Welcome to Tank Battle!',
                 selectMode: 'Select Game Mode:',
-                campaign: 'Campaign Mode',
                 infinite: 'Infinite Mode',
                 gold: 'Gold: ',
                 progress: 'Progress: ',
                 defeated: 'Defeated: ',
-                mode: 'Campaign Mode',
                 pause: 'Pause',
                 continue: 'Continue',
                 shop: 'Shop',
@@ -813,11 +1475,11 @@
                 desktopControls: 'Desktop Controls',
                 items: 'Items',
                 modes: 'Game Modes',
-                moveKeys: 'Arrow keys or WASD to move',
+                moveKeys: 'Tank automatically faces mouse pointer, click canvas to lock mouse, W/S or up/down arrow keys to move, ram enemies to destroy them',
                 shootKey: 'Spacebar to shoot',
                 collectItems: 'Collect items to enhance abilities',
                 defeatEnemies: 'Defeat enemies to earn gold',
-                desktopMove: 'Move: Arrow keys or WASD',
+                desktopMove: 'Tank automatically faces mouse pointer, click canvas to lock mouse, Move: W/S or up/down arrow keys, ram enemies to destroy them',
                 desktopShoot: 'Shoot: Spacebar',
                 desktopPause: 'Pause: P key',
                 desktopShop: 'Shop: Click Shop button',
@@ -831,21 +1493,20 @@
                 shootButton: '• Shoot: Fire',
                 pauseButton: '• Pause: Pause game',
                 backButton: '• 🎮 Button: Return to joystick',
-                joystickMode: '🎮 Joystick Mode: Direction keys + Shoot',
-                keyboardMode: '⌨️ Keyboard Mode: WASD + Direction keys + Shoot',
+                joystickMode: '🎮 Joystick Mode: Up/Down Move + Left/Right Rotate + Shoot',
+                keyboardMode: '⌨️ Keyboard Mode: A/D Rotate + W/S Move + Shoot',
                 switchMode: 'Switch: Tap ⌨️ Button',
                 shield: '🛡️ Shield: Invincible protection (10 gold)',
                 heal: '❤️ Heal: Restore 1 HP (1 gold)',
                 speed: '⚡ Speed: Increase movement speed (12 gold)',
-                campaignDesc: 'Campaign Mode: Defeat 10 enemies to win',
                 infiniteDesc: 'Infinite Mode: Defeat as many enemies as possible',
                 mobileTip: '📱 Mobile Control Instructions',
                 mobileTipJoystick: '🎮 Virtual Joystick Mode',
                 mobileTipKeyboard: '⌨️ Virtual Keyboard Mode',
-                mobileTipDirection: '• Use direction keys to control movement',
+                mobileTipDirection: '• Joystick up/down for movement, left/right for rotation',
                 mobileTipFire: '• Tap 🔥 button to shoot',
                 mobileTipSwitch: '• Tap ⌨️ button to switch to keyboard',
-                mobileTipWASD: '• Use WASD or arrow keys to move',
+                mobileTipWASD: '• Use A/D to rotate, W/S to move',
                 mobileTipShoot: '• Tap "Shoot" button to fire',
                 mobileTipBack: '• Tap 🎮 button to return to joystick',
                 gotIt: 'Got it',
@@ -853,7 +1514,17 @@
                 itemsTitle: 'Items',
                 buy: 'Buy',
                 insufficientGold: 'Insufficient gold!',
-                purchaseSuccess: 'Purchase successful!'
+                purchaseSuccess: 'Purchase successful!',
+                pointerLockHint: 'Click canvas to lock mouse | Press ESC to exit',
+                multiplayer: 'Multiplayer',
+                singlePlayer: 'Single Player',
+                connecting: 'Connecting...',
+                connected: 'Connected',
+                disconnected: 'Disconnected',
+                waitingForPlayers: 'Waiting for players...',
+                playersOnline: 'Players Online: ',
+                joinGame: 'Join Game',
+                createGame: 'Create Game'
             }
         };
         
@@ -891,12 +1562,11 @@
             // 更新欢迎界面
             document.querySelector('.welcome-content h2').textContent = t('welcome');
             document.querySelector('.welcome-content p').textContent = t('selectMode');
-            document.querySelector('.mode-btn[onclick*="campaign"]').textContent = t('campaign');
             document.querySelector('.mode-btn[onclick*="infinite"]').textContent = t('infinite');
             
             // 更新游戏界面
             document.getElementById('goldDisplay').textContent = t('gold') + gold;
-            document.getElementById('modeDisplay').textContent = t('mode');
+            document.getElementById('modeDisplay').textContent = t('infinite');
             document.getElementById('pauseBtn').textContent = t('pause');
             document.getElementById('shopBtn').textContent = t('shop');
             document.getElementById('closeShopBtn').textContent = t('close');
@@ -908,6 +1578,12 @@
             
             // 更新移动端提示
             updateMobileTipTexts();
+            
+            // 更新指针锁定提示
+            const pointerLockText = document.getElementById('pointerLockText');
+            if (pointerLockText) {
+                pointerLockText.textContent = t('pointerLockHint');
+            }
             
             // 更新进度显示
             updateProgressDisplay();
@@ -988,8 +1664,8 @@
                     const modeList = lists[lists.length - 1];
                     if (modeList) {
                         modeList.innerHTML = `
-                            <li><strong>${t('campaign')}：</strong>${t('campaignDesc')}</li>
                             <li><strong>${t('infinite')}：</strong>${t('infiniteDesc')}</li>
+                            <li><strong>${t('multiplayer')}：</strong>与其他玩家一起战斗</li>
                         `;
                     }
                 }
@@ -1012,8 +1688,17 @@
             // 更新虚拟键盘按钮文本
             const shootBtn = document.getElementById('shootKeyBtn');
             const pauseBtn = document.getElementById('pauseKeyBtn');
+            const wBtn = document.querySelector('.vk-w');
+            const aBtn = document.querySelector('.vk-a');
+            const sBtn = document.querySelector('.vk-s');
+            const dBtn = document.querySelector('.vk-d');
+            
             if (shootBtn) shootBtn.textContent = currentLanguage === 'zh' ? '射击' : 'Shoot';
             if (pauseBtn) pauseBtn.textContent = currentLanguage === 'zh' ? '暂停' : 'Pause';
+            if (wBtn) wBtn.textContent = currentLanguage === 'zh' ? '前进' : 'Forward';
+            if (aBtn) aBtn.textContent = currentLanguage === 'zh' ? '左转' : 'Left';
+            if (sBtn) sBtn.textContent = currentLanguage === 'zh' ? '后退' : 'Back';
+            if (dBtn) dBtn.textContent = currentLanguage === 'zh' ? '右转' : 'Right';
         }
         
         // 窗口大小自适应
@@ -1061,55 +1746,232 @@
                    a.y + a.size > b.y;
         }
         
+        // 视野检查函数
+        function isInVisionRange(x, y, playerX, playerY) {
+            if (!fogOfWar) return true;
+            
+            const distance = Math.sqrt((x - playerX) * (x - playerX) + (y - playerY) * (y - playerY));
+            return distance <= visionRange;
+        }
+        
+        // 视野方向检查（只有前方可见）
+        function isInFrontVision(x, y, playerX, playerY, playerDir) {
+            if (!fogOfWar) return true;
+            
+            // 计算目标相对于玩家的方向
+            const dx = x - playerX;
+            const dy = y - playerY;
+            const targetAngle = Math.atan2(dx, -dy);
+            
+            // 计算角度差
+            let angleDiff = targetAngle - playerDir;
+            if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+            if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+            
+            // 前方视野角度（90度）
+            const frontVisionAngle = Math.PI / 2;
+            
+            return Math.abs(angleDiff) <= frontVisionAngle / 2;
+        }
+        
         // 坦克类
         class Tank {
-            constructor(x, y, color, isPlayer = false) {
+            constructor(x, y, color, isPlayer = false, name = '') {
                 this.x = x;
                 this.y = y;
                 this.size = TANK_SIZE;
-                this.dir = 0;
+                this.dir = 0; // 角度（弧度）
                 this.color = color;
                 this.isPlayer = isPlayer;
                 this.cooldown = 0;
                 this.alive = true;
+                this.hitFlash = 0; // 被击中闪烁计时器
+                this.collisionCooldown = 0; // 碰撞冷却时间
+                this.name = name || (isPlayer ? playerName : 'AI玩家' + Math.floor(Math.random() * 1000));
+                this.isHidden = false; // 隐身状态
+                this.hideTimer = 0; // 隐身计时器
             }
             
             move(dx, dy) {
-                this.x += dx;
-                this.y += dy;
-                this.x = Math.max(0, Math.min(WIDTH - this.size, this.x));
-                this.y = Math.max(0, Math.min(HEIGHT - this.size, this.y));
+                const newX = this.x + dx;
+                const newY = this.y + dy;
+                
+                // 检查边界
+                let finalX = newX;
+                let finalY = newY;
+                
+                if (isMultiplayer) {
+                    // 多人模式：世界边界
+                    finalX = Math.max(0, Math.min(worldWidth - this.size, newX));
+                    finalY = Math.max(0, Math.min(worldHeight - this.size, newY));
+                } else {
+                    // 单人模式：画布边界
+                    finalX = Math.max(0, Math.min(WIDTH - this.size, newX));
+                    finalY = Math.max(0, Math.min(HEIGHT - this.size, newY));
+                }
+                
+                // 检查障碍物碰撞（草丛除外）
+                const testTank = { x: finalX, y: finalY, size: this.size };
+                let canMove = true;
+                
+                obstacles.forEach(obstacle => {
+                    // 草丛允许通过，不阻挡移动
+                    if (!obstacle.isBush && obstacle.intersects(testTank)) {
+                        canMove = false;
+                    }
+                });
+                
+                if (canMove) {
+                    this.x = finalX;
+                    this.y = finalY;
+                }
+                
+                // 检查树丛隐身
+                this.checkBushStealth();
             }
             
-            draw() {
+            // 检查树丛隐身
+            checkBushStealth() {
+                this.isHidden = false;
+                let inBush = false;
+                
+                obstacles.forEach(obstacle => {
+                    if (obstacle.isBush && obstacle.intersects(this)) {
+                        this.isHidden = true;
+                        inBush = true;
+                    }
+                });
+                
+                // 如果不在草丛中，立即取消隐身
+                if (!inBush) {
+                    this.hideTimer = 0;
+                }
+            }
+            
+            rotate(angle) {
+                this.dir += angle;
+                // 保持角度在0-2π之间
+                this.dir = this.dir % (2 * Math.PI);
+                if (this.dir < 0) this.dir += 2 * Math.PI;
+            }
+            
+            draw(cameraX = 0, cameraY = 0) {
+                const screenX = this.x - cameraX;
+                const screenY = this.y - cameraY;
+                
+                // 检查是否在屏幕范围内
+                if (screenX + this.size < 0 || screenX > WIDTH || 
+                    screenY + this.size < 0 || screenY > HEIGHT) {
+                    return;
+                }
+                
+                // 视野检查（只有玩家坦克不受视野限制）
+                if (!this.isPlayer && isMultiplayer) {
+                    if (!isInVisionRange(this.x, this.y, player.x, player.y) || 
+                        !isInFrontVision(this.x, this.y, player.x, player.y, player.dir)) {
+                        return;
+                    }
+                }
+                
                 ctx.save();
-                ctx.translate(this.x + this.size/2, this.y + this.size/2);
-                ctx.rotate(this.dir * Math.PI/2);
-                ctx.fillStyle = this.color;
+                ctx.translate(screenX + this.size/2, screenY + this.size/2);
+                ctx.rotate(this.dir);
+                
+                // 获取坦克颜色
+                let tankColor = this.color;
+                if (this.isPlayer && currentSkin && skins[currentSkin]) {
+                    tankColor = skins[currentSkin].color;
+                }
+                
+                // 被击中闪烁效果
+                if (this.hitFlash > 0 && this.hitFlash % 4 < 2) {
+                    ctx.fillStyle = '#fff';
+                } else if (tankColor === 'rainbow') {
+                    // 彩虹皮肤效果
+                    const hue = (frameCount * 2) % 360;
+                    ctx.fillStyle = `hsl(${hue}, 70%, 50%)`;
+                } else {
+                    ctx.fillStyle = tankColor;
+                }
+                
+                // 隐身效果
+                if (this.isHidden || this.hideTimer > 0) {
+                    ctx.globalAlpha = 0.3;
+                }
+                
+                // 绘制坦克主体
                 ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+                
+                // 绘制炮管
                 ctx.fillStyle = '#fff';
                 ctx.fillRect(-5, -this.size/2, 10, 20);
+                
+                // 绘制坦克装饰
+                if (this.isPlayer && currentSkin && skins[currentSkin]) {
+                    this.drawSkinDecorations(ctx);
+                }
+                
                 ctx.restore();
+                
+                // 绘制名称
+                if (this.name) {
+                    ctx.save();
+                    ctx.fillStyle = this.isPlayer ? '#00ff00' : '#ff0000';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(this.name, screenX + this.size/2, screenY - 10);
+                    ctx.restore();
+                }
+            }
+            
+            // 绘制皮肤装饰
+            drawSkinDecorations(ctx) {
+                switch(currentSkin) {
+                    case 'gold':
+                        // 金色装饰
+                        ctx.fillStyle = '#ffdd44';
+                        ctx.fillRect(-this.size/2 + 5, -this.size/2 + 5, this.size - 10, this.size - 10);
+                        break;
+                    case 'purple':
+                        // 紫色装饰
+                        ctx.fillStyle = '#dd44ff';
+                        ctx.fillRect(-this.size/2 + 8, -this.size/2 + 8, this.size - 16, this.size - 16);
+                        break;
+                    case 'black':
+                        // 黑色装饰
+                        ctx.fillStyle = '#666666';
+                        ctx.fillRect(-this.size/2 + 3, -this.size/2 + 3, this.size - 6, this.size - 6);
+                        break;
+                    case 'rainbow':
+                        // 彩虹装饰
+                        const hue = (frameCount * 3) % 360;
+                        ctx.fillStyle = `hsl(${hue}, 80%, 60%)`;
+                        ctx.fillRect(-this.size/2 + 4, -this.size/2 + 4, this.size - 8, this.size - 8);
+                        break;
+                }
             }
             
             fire() {
                 if (this.cooldown === 0) {
                     let bx = this.x + this.size/2 - BULLET_SIZE/2;
                     let by = this.y + this.size/2 - BULLET_SIZE/2;
-                    let dx = 0, dy = 0;
-                    switch(this.dir) {
-                        case 0: dy = -BULLET_SPEED; break;
-                        case 1: dx = BULLET_SPEED; break;
-                        case 2: dy = BULLET_SPEED; break;
-                        case 3: dx = -BULLET_SPEED; break;
-                    }
+                    let dx = Math.sin(this.dir) * BULLET_SPEED;
+                    let dy = -Math.cos(this.dir) * BULLET_SPEED;
                     bullets.push(new Bullet(bx, by, dx, dy, this.isPlayer));
+                    
+                    // 添加发射闪光效果
+                    let flashX = this.x + this.size/2 + Math.sin(this.dir) * (this.size/2 + 5);
+                    let flashY = this.y + this.size/2 - Math.cos(this.dir) * (this.size/2 + 5);
+                    muzzleFlashes.push(new MuzzleFlash(flashX, flashY, this.dir));
+                    
                     this.cooldown = 30;
                 }
             }
             
             update() {
                 if (this.cooldown > 0) this.cooldown--;
+                if (this.hitFlash > 0) this.hitFlash--;
+                if (this.collisionCooldown > 0) this.collisionCooldown--;
             }
         }
         
@@ -1123,22 +1985,289 @@
                 this.dy = dy;
                 this.fromPlayer = fromPlayer;
                 this.alive = true;
+                this.trail = []; // 尾迹数组
             }
             
             update() {
+                // 添加当前位置到尾迹
+                this.trail.push({x: this.x, y: this.y});
+                if (this.trail.length > 5) {
+                    this.trail.shift();
+                }
+                
                 this.x += this.dx;
                 this.y += this.dy;
-                if (this.x < -this.size || this.x > WIDTH || this.y < -this.size || this.y > HEIGHT) {
+                
+                // 检查边界
+                let maxX, maxY;
+                if (isMultiplayer) {
+                    maxX = worldWidth;
+                    maxY = worldHeight;
+                } else {
+                    maxX = WIDTH;
+                    maxY = HEIGHT;
+                }
+                
+                if (this.x < -this.size || this.x > maxX || this.y < -this.size || this.y > maxY) {
                     this.alive = false;
-                    if (Math.random() < 0.01) {
-                        console.log('子弹超出边界被消除:', this.x, this.y, '边界:', WIDTH, HEIGHT);
+                    return;
+                }
+                
+                // 检查障碍物碰撞（草丛除外）
+                obstacles.forEach(obstacle => {
+                    // 草丛允许子弹通过
+                    if (!obstacle.isBush && obstacle.intersects(this)) {
+                        this.alive = false;
                     }
+                });
+            }
+            
+            draw(cameraX = 0, cameraY = 0) {
+                const screenX = this.x - cameraX;
+                const screenY = this.y - cameraY;
+                
+                // 检查是否在屏幕范围内
+                if (screenX + this.size < 0 || screenX > WIDTH || 
+                    screenY + this.size < 0 || screenY > HEIGHT) {
+                    return;
+                }
+                
+                // 视野检查（只有玩家子弹不受视野限制）
+                if (!this.fromPlayer && isMultiplayer) {
+                    if (!isInVisionRange(this.x, this.y, player.x, player.y) || 
+                        !isInFrontVision(this.x, this.y, player.x, player.y, player.dir)) {
+                        return;
+                    }
+                }
+                
+                // 绘制尾迹
+                this.trail.forEach((pos, index) => {
+                    const trailScreenX = pos.x - cameraX;
+                    const trailScreenY = pos.y - cameraY;
+                    const alpha = (index + 1) / this.trail.length * 0.6;
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+                    ctx.fillStyle = this.fromPlayer ? '#ff0' : '#f00';
+                    ctx.fillRect(trailScreenX, trailScreenY, this.size * 0.8, this.size * 0.8);
+                    ctx.restore();
+                });
+                
+                // 绘制子弹主体
+                ctx.fillStyle = this.fromPlayer ? '#ff0' : '#f00';
+                ctx.fillRect(screenX, screenY, this.size, this.size);
+                
+                // 添加发光效果
+                ctx.save();
+                ctx.globalAlpha = 0.5;
+                ctx.fillStyle = this.fromPlayer ? '#fff' : '#ff6666';
+                ctx.fillRect(screenX - 1, screenY - 1, this.size + 2, this.size + 2);
+                ctx.restore();
+            }
+        }
+        
+        // 爆炸效果类
+        class Explosion {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.particles = [];
+                this.life = 30;
+                this.maxLife = 30;
+                
+                // 创建爆炸粒子
+                for (let i = 0; i < 15; i++) {
+                    this.particles.push({
+                        x: x + (Math.random() - 0.5) * 40,
+                        y: y + (Math.random() - 0.5) * 40,
+                        vx: (Math.random() - 0.5) * 8,
+                        vy: (Math.random() - 0.5) * 8,
+                        size: Math.random() * 6 + 2,
+                        color: ['#ff4444', '#ff8844', '#ffff44', '#ffffff'][Math.floor(Math.random() * 4)]
+                    });
                 }
             }
             
-            draw() {
-                ctx.fillStyle = this.fromPlayer ? '#ff0' : '#f00';
-                ctx.fillRect(this.x, this.y, this.size, this.size);
+            update() {
+                this.life--;
+                
+                // 更新粒子
+                this.particles.forEach(particle => {
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    particle.vx *= 0.95; // 减速
+                    particle.vy *= 0.95;
+                    particle.size *= 0.98; // 缩小
+                });
+            }
+            
+            draw(cameraX = 0, cameraY = 0) {
+                const alpha = this.life / this.maxLife;
+                const screenX = this.x - cameraX;
+                const screenY = this.y - cameraY;
+                
+                // 检查是否在屏幕范围内
+                if (screenX + 50 < 0 || screenX - 50 > WIDTH || 
+                    screenY + 50 < 0 || screenY - 50 > HEIGHT) {
+                    return;
+                }
+                
+                // 绘制爆炸中心
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.beginPath();
+                ctx.arc(screenX, screenY, (this.maxLife - this.life) * 2, 0, 2 * Math.PI);
+                ctx.fillStyle = 'rgba(255, 100, 0, 0.8)';
+                ctx.fill();
+                ctx.restore();
+                
+                // 绘制粒子
+                this.particles.forEach(particle => {
+                    const particleScreenX = particle.x - cameraX;
+                    const particleScreenY = particle.y - cameraY;
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+                    ctx.fillStyle = particle.color;
+                    ctx.beginPath();
+                    ctx.arc(particleScreenX, particleScreenY, particle.size, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.restore();
+                });
+            }
+            
+            isDead() {
+                return this.life <= 0;
+            }
+        }
+        
+        // 发射闪光类
+        class MuzzleFlash {
+            constructor(x, y, dir) {
+                this.x = x;
+                this.y = y;
+                this.dir = dir;
+                this.life = 8;
+                this.maxLife = 8;
+                this.size = 15;
+            }
+            
+            update() {
+                this.life--;
+                this.size = this.maxLife - this.life + 5;
+            }
+            
+            draw(cameraX = 0, cameraY = 0) {
+                const alpha = this.life / this.maxLife;
+                const screenX = this.x - cameraX;
+                const screenY = this.y - cameraY;
+                
+                // 检查是否在屏幕范围内
+                if (screenX + this.size < 0 || screenX > WIDTH || 
+                    screenY + this.size < 0 || screenY > HEIGHT) {
+                    return;
+                }
+                
+                ctx.save();
+                ctx.translate(screenX, screenY);
+                ctx.rotate(this.dir);
+                ctx.globalAlpha = alpha;
+                
+                // 绘制发射闪光
+                ctx.fillStyle = 'rgba(255, 255, 200, 0.9)';
+                ctx.beginPath();
+                ctx.ellipse(0, -this.size/2, this.size, this.size/3, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.fillStyle = 'rgba(255, 200, 100, 0.7)';
+                ctx.beginPath();
+                ctx.ellipse(0, -this.size/2, this.size * 0.7, this.size/4, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+            
+            isDead() {
+                return this.life <= 0;
+            }
+        }
+        
+        // 障碍物类
+        class Obstacle {
+            constructor(x, y, width, height, type = 'wall') {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.type = type; // 'wall', 'rock', 'tree', 'bush'
+                this.color = this.getColor();
+                this.isBush = type === 'bush'; // 是否为树丛
+            }
+            
+            getColor() {
+                switch(this.type) {
+                    case 'wall': return '#8B4513';
+                    case 'rock': return '#696969';
+                    case 'tree': return '#228B22';
+                    case 'bush': return '#32CD32';
+                    default: return '#8B4513';
+                }
+            }
+            
+            draw(cameraX = 0, cameraY = 0) {
+                const screenX = this.x - cameraX;
+                const screenY = this.y - cameraY;
+                
+                // 检查是否在屏幕范围内
+                if (screenX + this.width < 0 || screenX > WIDTH || 
+                    screenY + this.height < 0 || screenY > HEIGHT) {
+                    return;
+                }
+                
+                if (this.isBush) {
+                    // 草丛的特殊绘制效果
+                    ctx.save();
+                    ctx.globalAlpha = 0.8;
+                    
+                    // 绘制草丛背景
+                    ctx.fillStyle = '#2d5a2d';
+                    ctx.fillRect(screenX, screenY, this.width, this.height);
+                    
+                    // 绘制多个小圆形模拟草丛
+                    for (let i = 0; i < 12; i++) {
+                        const bushX = screenX + Math.random() * this.width;
+                        const bushY = screenY + Math.random() * this.height;
+                        const bushSize = 6 + Math.random() * 10;
+                        
+                        ctx.beginPath();
+                        ctx.arc(bushX, bushY, bushSize, 0, 2 * Math.PI);
+                        ctx.fillStyle = this.color;
+                        ctx.fill();
+                        
+                        // 添加高光效果
+                        ctx.fillStyle = '#4a8a4a';
+                        ctx.beginPath();
+                        ctx.arc(bushX - 2, bushY - 2, bushSize * 0.3, 0, 2 * Math.PI);
+                        ctx.fill();
+                    }
+                    
+                    ctx.restore();
+                } else {
+                    // 其他障碍物的正常绘制
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(screenX, screenY, this.width, this.height);
+                    
+                    // 添加纹理效果
+                    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(screenX, screenY, this.width, this.height);
+                }
+            }
+            
+            // 碰撞检测
+            intersects(other) {
+                return this.x < other.x + other.size &&
+                       this.x + this.width > other.x &&
+                       this.y < other.y + other.size &&
+                       this.y + this.height > other.y;
             }
         }
         
@@ -1152,12 +2281,21 @@
                 this.active = true;
             }
             
-            draw() {
+            draw(cameraX = 0, cameraY = 0) {
                 if (!this.active) return;
+                
+                const screenX = this.x - cameraX;
+                const screenY = this.y - cameraY;
+                
+                // 检查是否在屏幕范围内
+                if (screenX + this.size < 0 || screenX > WIDTH || 
+                    screenY + this.size < 0 || screenY > HEIGHT) {
+                    return;
+                }
                 
                 ctx.save();
                 ctx.beginPath();
-                ctx.arc(this.x + this.size/2, this.y + this.size/2, this.size/2, 0, 2*Math.PI);
+                ctx.arc(screenX + this.size/2, screenY + this.size/2, this.size/2, 0, 2*Math.PI);
                 
                 switch(this.type) {
                     case 'shield':
@@ -1186,53 +2324,88 @@
                     case 'speed': text = '⚡'; break;
                 }
                 
-                ctx.fillText(text, this.x + this.size/2, this.y + this.size/2 + 8);
+                ctx.fillText(text, screenX + this.size/2, screenY + this.size/2 + 8);
                 ctx.restore();
             }
         }
         
-        // 游戏模式选择
+                // 游戏模式选择
         window.selectMode = function(mode) {
+            if (!isLoggedIn) {
+                alert('请先登录！');
+                return;
+            }
+            
             console.log('选择游戏模式:', mode);
             gameMode = mode;
-            document.getElementById('modeDisplay').textContent = mode === 'campaign' ? t('campaign') : t('infinite');
             document.getElementById('welcomeMask').style.display = 'none';
-            
-            // 确保Canvas尺寸正确
-            resizeCanvas();
-            
-            // 初始化游戏
-            initGame();
-            
-            // 启动游戏循环
-            console.log('启动游戏循环...');
-            gameLoop();
+            if (mode === 'multiplayer') {
+                isMultiplayer = true;
+                document.getElementById('modeDisplay').textContent = t('infinite') + ' (多人)';
+                resizeCanvas();
+                initGame();
+                console.log('启动多人游戏循环...');
+                gameLoop();
+            } else {
+                isMultiplayer = false;
+                document.getElementById('modeDisplay').textContent = t('infinite');
+                resizeCanvas();
+                initGame();
+                console.log('启动单人游戏循环...');
+                gameLoop();
+            }
         };
+        
+
         
         // 游戏初始化
         function initGame() {
             console.log('开始初始化游戏...');
             console.log('Canvas尺寸:', WIDTH, 'x', HEIGHT);
             
-            player = new Tank(WIDTH/2 - TANK_SIZE/2, HEIGHT - TANK_SIZE - 10, '#0f0', true);
+            // 记录游戏开始
+            recordGameStart();
             
-            // 确保敌人坦克不会生成在边缘
-            const enemyMargin = 50;
-            const enemyMinX = enemyMargin;
-            const enemyMaxX = WIDTH - enemyMargin - TANK_SIZE;
-            const enemySpacing = (enemyMaxX - enemyMinX) / 3;
+            // 初始化大世界
+            if (isMultiplayer) {
+                // 多人模式：大世界
+                player = new Tank(worldWidth/2 - TANK_SIZE/2, worldHeight - TANK_SIZE - 10, '#0f0', true);
+                cameraX = player.x - WIDTH / 2;
+                cameraY = player.y - HEIGHT / 2;
+                
+                // 生成AI玩家
+                generateAIPlayers();
+                
+                // 生成障碍物
+                generateObstacles();
+            } else {
+                // 单人模式：小世界
+                player = new Tank(WIDTH/2 - TANK_SIZE/2, HEIGHT - TANK_SIZE - 10, '#0f0', true);
+                
+                // 确保敌人坦克不会生成在边缘
+                const enemyMargin = 50;
+                const enemyMinX = enemyMargin;
+                const enemyMaxX = WIDTH - enemyMargin - TANK_SIZE;
+                const enemySpacing = (enemyMaxX - enemyMinX) / 3;
+                
+                enemies = [
+                    new Tank(enemyMinX + enemySpacing * 0.5, 50, '#f00'),
+                    new Tank(enemyMinX + enemySpacing * 1.5, 50, '#f00'),
+                    new Tank(enemyMinX + enemySpacing * 2.5, 50, '#f00')
+                ];
+                
+                // 生成简单障碍物
+                generateSimpleObstacles();
+            }
             
-            enemies = [
-                new Tank(enemyMinX + enemySpacing * 0.5, 50, '#f00'),
-                new Tank(enemyMinX + enemySpacing * 1.5, 50, '#f00'),
-                new Tank(enemyMinX + enemySpacing * 2.5, 50, '#f00')
-            ];
             bullets = [];
             keys = {};
             frameCount = 0;
             gameState = 'playing';
             hideGameOverPanel();
             items = [];
+            explosions = [];
+            muzzleFlashes = [];
             playerHP = maxHP;
             enemiesDefeated = 0;
             shieldActive = false;
@@ -1243,34 +2416,141 @@
             updateProgressDisplay();
             updateGoldDisplay();
             
+            // 初始化鼠标位置为画布中心
+            mouseX = WIDTH / 2;
+            mouseY = HEIGHT / 2;
+            
+            // 显示鼠标锁定提示（仅桌面端）
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const hint = document.getElementById('pointerLockHint');
+            if (hint && !isMobile) {
+                hint.classList.add('show');
+            }
+            
             console.log('游戏初始化完成，玩家位置:', player.x, player.y);
             
             setTimeout(spawnRandomItem, 2000 + Math.random()*3000);
+        }
+        
+        // 生成AI玩家
+        function generateAIPlayers() {
+            enemies = [];
+            const aiCount = 3; // 3个AI敌人
+            
+            for (let i = 0; i < aiCount; i++) {
+                let x, y;
+                let attempts = 0;
+                
+                // 确保AI玩家不会生成在玩家附近或障碍物上
+                do {
+                    x = Math.random() * (worldWidth - TANK_SIZE);
+                    y = Math.random() * (worldHeight - TANK_SIZE);
+                    attempts++;
+                } while (
+                    Math.abs(x - player.x) < 200 && 
+                    Math.abs(y - player.y) < 200 && 
+                    attempts < 50
+                );
+                
+                enemies.push(new Tank(x, y, '#f00'));
+            }
+        }
+        
+        // 生成障碍物（多人模式）
+        function generateObstacles() {
+            obstacles = [];
+            
+            // 生成墙壁
+            for (let i = 0; i < 15; i++) {
+                const x = Math.random() * (worldWidth - 100);
+                const y = Math.random() * (worldHeight - 100);
+                const width = 60 + Math.random() * 80;
+                const height = 20 + Math.random() * 40;
+                
+                obstacles.push(new Obstacle(x, y, width, height, 'wall'));
+            }
+            
+            // 生成岩石
+            for (let i = 0; i < 20; i++) {
+                const x = Math.random() * (worldWidth - 60);
+                const y = Math.random() * (worldHeight - 60);
+                const size = 30 + Math.random() * 30;
+                
+                obstacles.push(new Obstacle(x, y, size, size, 'rock'));
+            }
+            
+            // 生成树木
+            for (let i = 0; i < 25; i++) {
+                const x = Math.random() * (worldWidth - 40);
+                const y = Math.random() * (worldHeight - 40);
+                const size = 20 + Math.random() * 20;
+                
+                obstacles.push(new Obstacle(x, y, size, size, 'tree'));
+            }
+            
+            // 生成树丛（隐身区域）
+            for (let i = 0; i < 30; i++) {
+                const x = Math.random() * (worldWidth - 50);
+                const y = Math.random() * (worldHeight - 50);
+                const size = 40 + Math.random() * 20;
+                
+                obstacles.push(new Obstacle(x, y, size, size, 'bush'));
+            }
+        }
+        
+        // 生成简单障碍物（单人模式）
+        function generateSimpleObstacles() {
+            obstacles = [];
+            
+            // 生成一些简单的障碍物
+            for (let i = 0; i < 8; i++) {
+                const x = Math.random() * (WIDTH - 80);
+                const y = Math.random() * (HEIGHT - 80);
+                const width = 40 + Math.random() * 40;
+                const height = 20 + Math.random() * 30;
+                
+                obstacles.push(new Obstacle(x, y, width, height, 'wall'));
+            }
+            
+            // 生成树丛
+            for (let i = 0; i < 5; i++) {
+                const x = Math.random() * (WIDTH - 50);
+                const y = Math.random() * (HEIGHT - 50);
+                const size = 30 + Math.random() * 20;
+                
+                obstacles.push(new Obstacle(x, y, size, size, 'bush'));
+            }
         }
         
         // 生成随机道具
         function spawnRandomItem() {
             if (gameState !== 'playing') return;
             
-            // 增加边距，确保道具不会生成在边缘
-            const margin = 40;
+            let x, y;
             const itemSize = 32;
             
-            // 确保道具完全在可视区域内
-            const minX = margin;
-            const maxX = WIDTH - margin - itemSize;
-            const minY = margin;
-            const maxY = HEIGHT - margin - itemSize;
-            
-            // 确保有效范围
-            if (maxX <= minX || maxY <= minY) {
-                console.log('Canvas太小，无法生成道具');
-                setTimeout(spawnRandomItem, 3000 + Math.random()*4000);
-                return;
+            if (isMultiplayer) {
+                // 多人模式：在世界范围内生成
+                x = Math.random() * (worldWidth - itemSize);
+                y = Math.random() * (worldHeight - itemSize);
+            } else {
+                // 单人模式：在画布范围内生成
+                const margin = 40;
+                const minX = margin;
+                const maxX = WIDTH - margin - itemSize;
+                const minY = margin;
+                const maxY = HEIGHT - margin - itemSize;
+                
+                if (maxX <= minX || maxY <= minY) {
+                    console.log('Canvas太小，无法生成道具');
+                    setTimeout(spawnRandomItem, 3000 + Math.random()*4000);
+                    return;
+                }
+                
+                x = Math.random() * (maxX - minX) + minX;
+                y = Math.random() * (maxY - minY) + minY;
             }
             
-            const x = Math.random() * (maxX - minX) + minX;
-            const y = Math.random() * (maxY - minY) + minY;
             const types = ['shield', 'heal', 'speed'];
             const type = types[Math.floor(Math.random() * types.length)];
             
@@ -1300,11 +2580,7 @@
         }
         
         function updateProgressDisplay() {
-            if (gameMode === 'campaign') {
-                document.getElementById('progressDisplay').textContent = t('progress') + enemiesDefeated + '/' + enemiesToWin;
-            } else {
-                document.getElementById('progressDisplay').textContent = t('defeated') + enemiesDefeated;
-            }
+            document.getElementById('progressDisplay').textContent = t('defeated') + enemiesDefeated;
         }
         
         function showGameOverPanel(text) {
@@ -1319,7 +2595,11 @@
         // 商城功能
         function renderShopPanel() {
             const shopContent = document.getElementById('shopContent');
-            let html = '<h3>' + t('itemsTitle') + '</h3>';
+            let html = '<div style="display:flex;gap:20px;flex-wrap:wrap;">';
+            
+            // 道具部分
+            html += '<div style="flex:1;min-width:300px;">';
+            html += '<h3>' + t('itemsTitle') + '</h3>';
             
             availableItems.forEach(item => {
                 html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;margin:5px 0;background:rgba(255,255,255,0.1);border-radius:8px;">
@@ -1328,7 +2608,35 @@
                     <button onclick="buyItem('${item.type}')">${t('buy')}</button>
                 </div>`;
             });
+            html += '</div>';
             
+            // 皮肤部分
+            html += '<div style="flex:1;min-width:300px;">';
+            html += '<h3>皮肤商店</h3>';
+            
+            Object.keys(skins).forEach(skinId => {
+                const skin = skins[skinId];
+                const isOwned = unlockedSkins.includes(skinId);
+                const isEquipped = currentSkin === skinId;
+                const canAfford = gold >= skin.price;
+                
+                html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;margin:5px 0;background:rgba(255,255,255,0.1);border-radius:8px;border:${isEquipped ? '2px solid #00ff00' : '1px solid rgba(255,255,255,0.2)'}">
+                    <div>
+                        <div style="font-weight:bold;">${skin.name}</div>
+                        <div style="font-size:12px;color:#ccc;">${skin.description}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div>${skin.price}${currentLanguage === 'zh' ? '金币' : ' gold'}</div>
+                        ${isOwned ? 
+                            `<button onclick="equipSkin('${skinId}')" ${isEquipped ? 'disabled' : ''}>${isEquipped ? '已装备' : '装备'}</button>` :
+                            `<button onclick="buySkin('${skinId}')" ${canAfford ? '' : 'disabled'}>${canAfford ? t('buy') : '金币不足'}</button>`
+                        }
+                    </div>
+                </div>`;
+            });
+            html += '</div>';
+            
+            html += '</div>';
             shopContent.innerHTML = html;
         }
         
@@ -1342,6 +2650,12 @@
             
             gold -= item.price;
             updateGoldDisplay();
+            
+            // 保存用户数据
+            if (currentUsername && currentUsername !== '000') {
+                userAccounts[currentUsername].gold = gold;
+                saveAccounts();
+            }
             
             switch(type) {
                 case 'shield':
@@ -1361,6 +2675,49 @@
             alert(t('purchaseSuccess'));
         };
         
+        // 购买皮肤
+        window.buySkin = function(skinId) {
+            const skin = skins[skinId];
+            if (!skin || gold < skin.price) {
+                alert(t('insufficientGold'));
+                return;
+            }
+            
+            gold -= skin.price;
+            updateGoldDisplay();
+            unlockedSkins.push(skinId);
+            
+            // 保存用户数据
+            if (currentUsername && currentUsername !== '000') {
+                userAccounts[currentUsername].gold = gold;
+                userAccounts[currentUsername].unlockedSkins = unlockedSkins;
+                saveAccounts();
+            }
+            
+            alert(`购买成功！已解锁 ${skin.name}`);
+            
+            // 刷新商城界面
+            renderShopPanel();
+        };
+        
+        // 装备皮肤
+        window.equipSkin = function(skinId) {
+            if (unlockedSkins.includes(skinId)) {
+                currentSkin = skinId;
+                
+                // 保存用户数据
+                if (currentUsername && currentUsername !== '000') {
+                    userAccounts[currentUsername].currentSkin = currentSkin;
+                    saveAccounts();
+                }
+                
+                alert(`已装备 ${skins[skinId].name}`);
+                
+                // 刷新商城界面
+                renderShopPanel();
+            }
+        };
+        
         // 主游戏循环
         function gameLoop() {
             if (pause) return;
@@ -1370,6 +2727,17 @@
             
             if (gameState !== 'playing') return;
             
+            if (isMultiplayer) {
+                // 多人游戏循环
+                multiplayerGameLoop();
+            } else {
+                // 单人游戏循环
+                singlePlayerGameLoop();
+            }
+        }
+        
+        // 单人游戏循环
+        function singlePlayerGameLoop() {
             // 绘制背景
             ctx.fillStyle = '#222';
             ctx.fillRect(0, 0, WIDTH, HEIGHT);
@@ -1390,25 +2758,69 @@
                 ctx.stroke();
             }
             
+            // 绘制障碍物
+            obstacles.forEach(obstacle => obstacle.draw());
+            
             player.update();
             
-            // 玩家移动
+            // 玩家移动和旋转
             let moveSpeed = speedActive ? PLAYER_SPEED * 1.5 : PLAYER_SPEED;
+            
+            // 朝向鼠标指针（桌面端）或键盘控制旋转（移动端）
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            // 在锁定状态下隐藏提示（仅桌面端）
+            if (isPointerLocked && !isMobile) {
+                const hint = document.getElementById('pointerLockHint');
+                if (hint) {
+                    hint.classList.remove('show');
+                }
+            }
+            
+            if (!isMobile && mouseX !== undefined && mouseY !== undefined) {
+                // 桌面端：朝向鼠标指针
+                let dx = mouseX - (player.x + player.size/2);
+                let dy = mouseY - (player.y + player.size/2);
+                let targetAngle = Math.atan2(dx, -dy);
+                
+                if (isPointerLocked) {
+                    // 锁定状态下直接设置朝向，更精确
+                    player.dir = targetAngle;
+                } else {
+                    // 非锁定状态下平滑旋转
+                    let angleDiff = targetAngle - player.dir;
+                    
+                    // 处理角度跨越0度的情况
+                    if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                    if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                    
+                    // 平滑旋转
+                    let rotationSpeed = 0.15;
+                    if (Math.abs(angleDiff) > 0.05) {
+                        player.rotate(angleDiff * rotationSpeed);
+                    }
+                }
+            } else {
+                // 移动端：键盘控制旋转
+                let rotationSpeed = 0.1;
+                if (keys['arrowleft'] || keys['a']) { 
+                    player.rotate(-rotationSpeed);
+                }
+                if (keys['arrowright'] || keys['d']) { 
+                    player.rotate(rotationSpeed);
+                }
+            }
+            
+            // 前进后退控制
             if (keys['arrowup'] || keys['w']) { 
-                player.dir = 0; 
-                player.move(0, -moveSpeed); 
+                let dx = Math.sin(player.dir) * moveSpeed;
+                let dy = -Math.cos(player.dir) * moveSpeed;
+                player.move(dx, dy);
             }
-            else if (keys['arrowright'] || keys['d']) { 
-                player.dir = 1; 
-                player.move(moveSpeed, 0); 
-            }
-            else if (keys['arrowdown'] || keys['s']) { 
-                player.dir = 2; 
-                player.move(0, moveSpeed); 
-            }
-            else if (keys['arrowleft'] || keys['a']) { 
-                player.dir = 3; 
-                player.move(-moveSpeed, 0); 
+            if (keys['arrowdown'] || keys['s']) { 
+                let dx = -Math.sin(player.dir) * moveSpeed;
+                let dy = Math.cos(player.dir) * moveSpeed;
+                player.move(dx, dy);
             }
             
             if (keys[' ']) player.fire();
@@ -1471,15 +2883,28 @@
             enemies.forEach((enemy, idx) => {
                 if (!enemy.alive) return;
                 enemy.update();
+                
+                // 随机旋转
                 if (frameCount % 60 === 0) {
-                    enemy.dir = Math.floor(Math.random() * 4);
+                    enemy.rotate((Math.random() - 0.5) * 0.5);
                 }
-                switch(enemy.dir) {
-                    case 0: enemy.move(0, -ENEMY_SPEED); break;
-                    case 1: enemy.move(ENEMY_SPEED, 0); break;
-                    case 2: enemy.move(0, ENEMY_SPEED); break;
-                    case 3: enemy.move(-ENEMY_SPEED, 0); break;
+                
+                // 随机移动
+                if (frameCount % 30 === 0) {
+                    let moveDirection = Math.random();
+                    if (moveDirection < 0.25) {
+                        // 前进
+                        let dx = Math.sin(enemy.dir) * ENEMY_SPEED;
+                        let dy = -Math.cos(enemy.dir) * ENEMY_SPEED;
+                        enemy.move(dx, dy);
+                    } else if (moveDirection < 0.5) {
+                        // 后退
+                        let dx = -Math.sin(enemy.dir) * ENEMY_SPEED;
+                        let dy = Math.cos(enemy.dir) * ENEMY_SPEED;
+                        enemy.move(dx, dy);
+                    }
                 }
+                
                 if (frameCount % 120 === 0) {
                     enemy.fire();
                 }
@@ -1489,6 +2914,15 @@
             bullets.forEach(bullet => bullet.update());
             bullets = bullets.filter(bullet => bullet.alive);
             bullets.forEach(bullet => bullet.draw());
+            
+            // 更新和绘制特效
+            explosions.forEach(explosion => explosion.update());
+            explosions = explosions.filter(explosion => !explosion.isDead());
+            explosions.forEach(explosion => explosion.draw());
+            
+            muzzleFlashes.forEach(flash => flash.update());
+            muzzleFlashes = muzzleFlashes.filter(flash => !flash.isDead());
+            muzzleFlashes.forEach(flash => flash.draw());
 
             // 碰撞检测
             bullets.forEach(bullet => {
@@ -1498,16 +2932,29 @@
                         if (enemy.alive && rectsIntersect(bullet, enemy)) {
                             enemy.alive = false;
                             bullet.alive = false;
+                            enemy.hitFlash = 10; // 设置闪烁效果
+                            
+                            // 添加爆炸效果
+                            explosions.push(new Explosion(enemy.x + enemy.size/2, enemy.y + enemy.size/2));
+                            
                             gold += 5;
                             updateGoldDisplay();
+                            
+                            // 记录统计
+                            recordEnemyDefeated();
+                            recordGoldEarned(5);
+                            
+                            // 保存用户数据
+                            if (currentUsername && currentUsername !== '000') {
+                                userAccounts[currentUsername].gold = gold;
+                                saveAccounts();
+                            }
+                            
                             enemiesDefeated++;
                             updateProgressDisplay();
                             
-                            if (gameMode === 'campaign' && enemiesDefeated >= enemiesToWin) {
-                                showGameOverPanel(t('victory'));
-                                gameState = 'over';
-                                return;
-                            }
+                            // 检查成就
+                            checkAchievements();
                             
                             setTimeout(() => {
                                 // 确保敌人坦克不会生成在边缘
@@ -1524,6 +2971,11 @@
                         if (!shieldActive) {
                             playerHP--;
                             bullet.alive = false;
+                            player.hitFlash = 20; // 设置闪烁效果
+                            
+                            // 添加爆炸效果
+                            explosions.push(new Explosion(player.x + player.size/2, player.y + player.size/2));
+                            
                             updateHPDisplay();
                             if (playerHP <= 0) {
                                 player.alive = false;
@@ -1534,6 +2986,380 @@
                     }
                 }
             });
+            
+            // 坦克碰撞检测
+            if (player.alive && player.collisionCooldown === 0) {
+                enemies.forEach((enemy, idx) => {
+                    if (enemy.alive && rectsIntersect(player, enemy)) {
+                        // 设置碰撞冷却时间
+                        player.collisionCooldown = 30;
+                        enemy.collisionCooldown = 30;
+                        
+                        // 玩家坦克碰撞敌人
+                        if (!shieldActive) {
+                            playerHP--;
+                            player.hitFlash = 20;
+                            updateHPDisplay();
+                            
+                            // 添加碰撞爆炸效果
+                            explosions.push(new Explosion(enemy.x + enemy.size/2, enemy.y + enemy.size/2));
+                            
+                            if (playerHP <= 0) {
+                                player.alive = false;
+                            }
+                        }
+                        
+                        // 敌人坦克被撞死
+                        enemy.alive = false;
+                        enemy.hitFlash = 10;
+                        
+                        // 添加爆炸效果
+                        explosions.push(new Explosion(enemy.x + enemy.size/2, enemy.y + enemy.size/2));
+                        
+                        gold += 3; // 撞击获得的金币较少
+                        updateGoldDisplay();
+                        
+                        // 保存用户数据
+                        if (currentUsername && currentUsername !== '000') {
+                            userAccounts[currentUsername].gold = gold;
+                            saveAccounts();
+                        }
+                        
+                        enemiesDefeated++;
+                        updateProgressDisplay();
+                        
+                        // 生成新的敌人坦克
+                        setTimeout(() => {
+                            const margin = 50;
+                            const minX = margin;
+                            const maxX = WIDTH - margin - TANK_SIZE;
+                            const x = Math.random() * (maxX - minX) + minX;
+                            enemies[idx] = new Tank(x, 50, '#f00');
+                        }, 400);
+                    }
+                });
+            }
+
+            if (!player.alive) {
+                showGameOverPanel(t('gameOver'));
+                gameState = 'over';
+                return;
+            }
+
+            frameCount++;
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // 多人游戏循环
+        function multiplayerGameLoop() {
+            // 更新摄像机位置（跟随玩家）
+            cameraX = player.x - WIDTH / 2;
+            cameraY = player.y - HEIGHT / 2;
+            
+            // 限制摄像机在世界范围内
+            cameraX = Math.max(0, Math.min(worldWidth - WIDTH, cameraX));
+            cameraY = Math.max(0, Math.min(worldHeight - HEIGHT, cameraY));
+            
+            // 绘制背景
+            ctx.fillStyle = '#222';
+            ctx.fillRect(0, 0, WIDTH, HEIGHT);
+            
+            // 绘制网格（世界坐标）
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 1;
+            const gridSize = 50;
+            const startX = Math.floor(cameraX / gridSize) * gridSize;
+            const startY = Math.floor(cameraY / gridSize) * gridSize;
+            const endX = startX + WIDTH + gridSize;
+            const endY = startY + HEIGHT + gridSize;
+            
+            for (let x = startX; x <= endX; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x - cameraX, 0);
+                ctx.lineTo(x - cameraX, HEIGHT);
+                ctx.stroke();
+            }
+            for (let y = startY; y <= endY; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y - cameraY);
+                ctx.lineTo(WIDTH, y - cameraY);
+                ctx.stroke();
+            }
+            
+            // 绘制障碍物
+            obstacles.forEach(obstacle => obstacle.draw(cameraX, cameraY));
+            
+            player.update();
+            
+            // 玩家移动和旋转（与单人模式相同）
+            let moveSpeed = speedActive ? PLAYER_SPEED * 1.5 : PLAYER_SPEED;
+            
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isPointerLocked && !isMobile) {
+                const hint = document.getElementById('pointerLockHint');
+                if (hint) {
+                    hint.classList.remove('show');
+                }
+            }
+            
+            if (!isMobile && mouseX !== undefined && mouseY !== undefined) {
+                let dx = mouseX - (player.x - cameraX + player.size/2);
+                let dy = mouseY - (player.y - cameraY + player.size/2);
+                let targetAngle = Math.atan2(dx, -dy);
+                
+                if (isPointerLocked) {
+                    player.dir = targetAngle;
+                } else {
+                    let angleDiff = targetAngle - player.dir;
+                    if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                    if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                    
+                    let rotationSpeed = 0.15;
+                    if (Math.abs(angleDiff) > 0.05) {
+                        player.rotate(angleDiff * rotationSpeed);
+                    }
+                }
+            } else {
+                let rotationSpeed = 0.1;
+                if (keys['arrowleft'] || keys['a']) { 
+                    player.rotate(-rotationSpeed);
+                }
+                if (keys['arrowright'] || keys['d']) { 
+                    player.rotate(rotationSpeed);
+                }
+            }
+            
+            if (keys['arrowup'] || keys['w']) { 
+                let dx = Math.sin(player.dir) * moveSpeed;
+                let dy = -Math.cos(player.dir) * moveSpeed;
+                player.move(dx, dy);
+            }
+            if (keys['arrowdown'] || keys['s']) { 
+                let dx = -Math.sin(player.dir) * moveSpeed;
+                let dy = Math.cos(player.dir) * moveSpeed;
+                player.move(dx, dy);
+            }
+            
+            if (keys[' ']) player.fire();
+            
+            // 绘制道具
+            items.forEach(item => item.draw(cameraX, cameraY));
+            
+            // 玩家吃到道具
+            items = items.filter(item => {
+                if (item.active && rectsIntersect(player, item)) {
+                    switch(item.type) {
+                        case 'shield':
+                            shieldActive = true;
+                            shieldTimer = 300;
+                            break;
+                        case 'heal':
+                            playerHP = Math.min(playerHP + 1, maxHP);
+                            updateHPDisplay();
+                            break;
+                        case 'speed':
+                            speedActive = true;
+                            speedTimer = 240;
+                            break;
+                    }
+                    return false;
+                }
+                return true;
+            });
+            
+            // 玩家特效
+            if (shieldActive) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(player.x - cameraX + player.size/2, player.y - cameraY + player.size/2, player.size/2 + 8, 0, 2*Math.PI);
+                ctx.strokeStyle = 'rgba(80,200,255,0.7)';
+                ctx.lineWidth = 6;
+                ctx.setLineDash([8, 6]);
+                ctx.stroke();
+                ctx.restore();
+                shieldTimer--;
+                if (shieldTimer <= 0) shieldActive = false;
+            }
+            
+            if (speedActive) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(player.x - cameraX + player.size/2, player.y - cameraY + player.size/2, player.size/2 + 16, 0, 2*Math.PI);
+                ctx.strokeStyle = 'rgba(80,255,120,0.5)';
+                ctx.lineWidth = 4;
+                ctx.setLineDash([4, 8]);
+                ctx.stroke();
+                ctx.restore();
+                speedTimer--;
+                if (speedTimer <= 0) speedActive = false;
+            }
+            
+            player.draw(cameraX, cameraY);
+
+            // AI敌人
+            enemies.forEach((enemy, idx) => {
+                if (!enemy.alive) return;
+                enemy.update();
+                
+                // 简单的AI行为
+                if (frameCount % 60 === 0) {
+                    enemy.rotate((Math.random() - 0.5) * 0.5);
+                }
+                
+                if (frameCount % 30 === 0) {
+                    let moveDirection = Math.random();
+                    if (moveDirection < 0.25) {
+                        let dx = Math.sin(enemy.dir) * ENEMY_SPEED;
+                        let dy = -Math.cos(enemy.dir) * ENEMY_SPEED;
+                        enemy.move(dx, dy);
+                    } else if (moveDirection < 0.5) {
+                        let dx = -Math.sin(enemy.dir) * ENEMY_SPEED;
+                        let dy = Math.cos(enemy.dir) * ENEMY_SPEED;
+                        enemy.move(dx, dy);
+                    }
+                }
+                
+                if (frameCount % 120 === 0) {
+                    enemy.fire();
+                }
+                enemy.draw(cameraX, cameraY);
+            });
+
+            bullets.forEach(bullet => bullet.update());
+            bullets = bullets.filter(bullet => bullet.alive);
+            bullets.forEach(bullet => bullet.draw(cameraX, cameraY));
+            
+            // 更新和绘制特效
+            explosions.forEach(explosion => explosion.update());
+            explosions = explosions.filter(explosion => !explosion.isDead());
+            explosions.forEach(explosion => explosion.draw(cameraX, cameraY));
+            
+            muzzleFlashes.forEach(flash => flash.update());
+            muzzleFlashes = muzzleFlashes.filter(flash => !flash.isDead());
+            muzzleFlashes.forEach(flash => flash.draw(cameraX, cameraY));
+
+            // 碰撞检测（与单人模式相同）
+            bullets.forEach(bullet => {
+                if (!bullet.alive) return;
+                if (bullet.fromPlayer) {
+                    enemies.forEach((enemy, idx) => {
+                        if (enemy.alive && rectsIntersect(bullet, enemy)) {
+                            enemy.alive = false;
+                            bullet.alive = false;
+                            enemy.hitFlash = 10;
+                            
+                            explosions.push(new Explosion(enemy.x + enemy.size/2, enemy.y + enemy.size/2));
+                            
+                            gold += 5;
+                            updateGoldDisplay();
+                            
+                            // 记录统计
+                            recordEnemyDefeated();
+                            recordGoldEarned(5);
+                            
+                            // 保存用户数据
+                            if (currentUsername && currentUsername !== '000') {
+                                userAccounts[currentUsername].gold = gold;
+                                saveAccounts();
+                            }
+                            
+                            enemiesDefeated++;
+                            updateProgressDisplay();
+                            
+                            // 检查成就
+                            checkAchievements();
+                            
+                            // 生成新的AI敌人
+                            setTimeout(() => {
+                                let x, y;
+                                let attempts = 0;
+                                do {
+                                    x = Math.random() * (worldWidth - TANK_SIZE);
+                                    y = Math.random() * (worldHeight - TANK_SIZE);
+                                    attempts++;
+                                } while (
+                                    Math.abs(x - player.x) < 200 && 
+                                    Math.abs(y - player.y) < 200 && 
+                                    attempts < 50
+                                );
+                                enemies[idx] = new Tank(x, y, '#f00');
+                            }, 400);
+                        }
+                    });
+                } else {
+                    if (player.alive && rectsIntersect(bullet, player)) {
+                        if (!shieldActive) {
+                            playerHP--;
+                            bullet.alive = false;
+                            player.hitFlash = 20;
+                            
+                            explosions.push(new Explosion(player.x + player.size/2, player.y + player.size/2));
+                            
+                            updateHPDisplay();
+                            if (playerHP <= 0) {
+                                player.alive = false;
+                            }
+                        } else {
+                            bullet.alive = false;
+                        }
+                    }
+                }
+            });
+            
+            // 坦克碰撞检测
+            if (player.alive && player.collisionCooldown === 0) {
+                enemies.forEach((enemy, idx) => {
+                    if (enemy.alive && rectsIntersect(player, enemy)) {
+                        player.collisionCooldown = 30;
+                        enemy.collisionCooldown = 30;
+                        
+                        if (!shieldActive) {
+                            playerHP--;
+                            player.hitFlash = 20;
+                            updateHPDisplay();
+                            
+                            explosions.push(new Explosion(enemy.x + enemy.size/2, enemy.y + enemy.size/2));
+                            
+                            if (playerHP <= 0) {
+                                player.alive = false;
+                            }
+                        }
+                        
+                        enemy.alive = false;
+                        enemy.hitFlash = 10;
+                        
+                        explosions.push(new Explosion(enemy.x + enemy.size/2, enemy.y + enemy.size/2));
+                        
+                        gold += 3;
+                        updateGoldDisplay();
+                        
+                        // 保存用户数据
+                        if (currentUsername && currentUsername !== '000') {
+                            userAccounts[currentUsername].gold = gold;
+                            saveAccounts();
+                        }
+                        
+                        enemiesDefeated++;
+                        updateProgressDisplay();
+                        
+                        setTimeout(() => {
+                            let x, y;
+                            let attempts = 0;
+                            do {
+                                x = Math.random() * (worldWidth - TANK_SIZE);
+                                y = Math.random() * (worldHeight - TANK_SIZE);
+                                attempts++;
+                            } while (
+                                Math.abs(x - player.x) < 200 && 
+                                Math.abs(y - player.y) < 200 && 
+                                attempts < 50
+                            );
+                            enemies[idx] = new Tank(x, y, '#f00');
+                        }, 400);
+                    }
+                });
+            }
 
             if (!player.alive) {
                 showGameOverPanel(t('gameOver'));
@@ -1608,31 +3434,32 @@
                 // 更新摇杆位置
                 joystickStick.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px))`;
                 
-                // 根据摇杆位置设置移动方向
-                const threshold = 15; // 激活阈值
-                
-                // 重置所有方向
-                keys['arrowup'] = false;
-                keys['arrowdown'] = false;
-                keys['arrowleft'] = false;
-                keys['arrowright'] = false;
-                
-                // 根据摇杆位置激活相应方向
-                if (Math.abs(moveY) > threshold) {
-                    if (moveY < 0) {
-                        keys['arrowup'] = true;
-                    } else {
-                        keys['arrowdown'] = true;
-                    }
+                            // 根据摇杆位置设置移动方向
+            const threshold = 15; // 激活阈值
+            
+            // 重置所有方向
+            keys['arrowup'] = false;
+            keys['arrowdown'] = false;
+            keys['arrowleft'] = false;
+            keys['arrowright'] = false;
+            
+            // 根据摇杆位置激活相应方向
+            if (Math.abs(moveY) > threshold) {
+                if (moveY < 0) {
+                    keys['arrowup'] = true;
+                } else {
+                    keys['arrowdown'] = true;
                 }
-                
-                if (Math.abs(moveX) > threshold) {
-                    if (moveX > 0) {
-                        keys['arrowright'] = true;
-                    } else {
-                        keys['arrowleft'] = true;
-                    }
+            }
+            
+            // 移动端使用摇杆控制旋转（左右方向键）
+            if (Math.abs(moveX) > threshold) {
+                if (moveX > 0) {
+                    keys['arrowright'] = true;
+                } else {
+                    keys['arrowleft'] = true;
                 }
+            }
             }
             
             // 触摸事件
@@ -1793,11 +3620,88 @@
         document.addEventListener('keydown', e => {
             if (e.code === 'Space' || e.key === ' ') e.preventDefault();
             keys[e.key.toLowerCase()] = true;
+            
+            // ESC键退出指针锁定
+            if (e.key === 'Escape' && isPointerLocked) {
+                document.exitPointerLock();
+            }
         });
         
         document.addEventListener('keyup', e => { 
             keys[e.key.toLowerCase()] = false; 
         });
+        
+        // 鼠标移动事件
+        canvas.addEventListener('mousemove', e => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+        });
+        
+        canvas.addEventListener('mouseleave', () => {
+            mouseX = undefined;
+            mouseY = undefined;
+        });
+        
+        // 鼠标锁定功能
+        let isPointerLocked = false;
+        
+        canvas.addEventListener('click', () => {
+            if (!isPointerLocked && gameState === 'playing') {
+                canvas.requestPointerLock();
+            }
+        });
+        
+        document.addEventListener('pointerlockchange', () => {
+            isPointerLocked = document.pointerLockElement === canvas;
+            console.log('指针锁定状态:', isPointerLocked ? '已锁定' : '未锁定');
+            
+            // 重置累积移动值
+            if (isPointerLocked) {
+                accumulatedX = 0;
+                accumulatedY = 0;
+                // 初始化鼠标位置为画布中心
+                mouseX = WIDTH / 2;
+                mouseY = HEIGHT / 2;
+            }
+            
+            const hint = document.getElementById('pointerLockHint');
+            if (hint) {
+                if (isPointerLocked) {
+                    hint.classList.remove('show');
+                    hint.classList.add('hide');
+                } else {
+                    hint.classList.remove('hide');
+                    hint.classList.add('show');
+                }
+            }
+        });
+        
+        // 处理锁定状态下的鼠标移动
+        let accumulatedX = 0;
+        let accumulatedY = 0;
+        
+        document.addEventListener('mousemove', e => {
+            if (isPointerLocked && gameState === 'playing') {
+                // 累积鼠标移动
+                accumulatedX += e.movementX;
+                accumulatedY += e.movementY;
+                
+                // 计算鼠标位置（相对于画布中心）
+                const centerX = WIDTH / 2;
+                const centerY = HEIGHT / 2;
+                mouseX = centerX + accumulatedX;
+                mouseY = centerY + accumulatedY;
+                
+                // 限制鼠标位置在画布范围内
+                mouseX = Math.max(0, Math.min(WIDTH, mouseX));
+                mouseY = Math.max(0, Math.min(HEIGHT, mouseY));
+            }
+        });
+        
+        // 初始化鼠标位置为画布中心
+        mouseX = WIDTH / 2;
+        mouseY = HEIGHT / 2;
         
         // 按钮事件
         document.getElementById('pauseBtn').onclick = () => {
@@ -1832,6 +3736,7 @@
         window.addEventListener('resize', resizeCanvas);
         
         // 初始化
+        loadAccounts(); // 加载账号数据
         resizeCanvas();
         setupMobileControls();
         setupMobileOptimization();
@@ -1848,7 +3753,10 @@
         // 添加错误处理
         window.addEventListener('error', function(e) {
             console.error('游戏错误:', e.error);
-            alert('游戏加载出错，请刷新页面重试');
+            // 只在严重错误时显示提示，避免干扰正常操作
+            if (e.error && e.error.message && e.error.message.includes('Cannot read properties')) {
+                console.error('严重错误，可能需要刷新页面');
+            }
         });
         
         // 添加调试信息
@@ -1955,6 +3863,44 @@
                 if (desktopControls) desktopControls.classList.add('active');
                 if (mobileControls) mobileControls.classList.remove('active');
             }
+        }
+
+        function updateAccountInfoPanel() {
+            const infoUsername = document.getElementById('infoUsername');
+            const infoCreated = document.getElementById('infoCreated');
+            const infoLastLogin = document.getElementById('infoLastLogin');
+            const infoGames = document.getElementById('infoGames');
+            const infoDefeat = document.getElementById('infoDefeat');
+            const infoGold = document.getElementById('infoGold');
+            const infoAchievements = document.getElementById('infoAchievements');
+            if (!currentUsername || !userAccounts[currentUsername]) {
+                infoUsername.textContent = '-';
+                infoCreated.textContent = '-';
+                infoLastLogin.textContent = '-';
+                infoGames.textContent = '-';
+                infoDefeat.textContent = '-';
+                infoGold.textContent = '-';
+                infoAchievements.textContent = '-';
+                return;
+            }
+            const acc = userAccounts[currentUsername];
+            infoUsername.textContent = currentUsername;
+            infoCreated.textContent = acc.createdAt ? new Date(acc.createdAt).toLocaleString() : '-';
+            infoLastLogin.textContent = acc.stats && acc.stats.lastLoginTime ? new Date(acc.stats.lastLoginTime).toLocaleString() : '-';
+            infoGames.textContent = acc.stats ? acc.stats.totalGamesPlayed : 0;
+            infoDefeat.textContent = acc.stats ? acc.stats.totalEnemiesDefeated : 0;
+            infoGold.textContent = acc.stats ? acc.stats.totalGoldEarned : 0;
+            infoAchievements.textContent = acc.stats && acc.stats.achievements && acc.stats.achievements.length > 0 ? acc.stats.achievements.map(a => {
+                switch(a) {
+                    case 'first_blood': return '首次击杀';
+                    case 'veteran': return '老兵';
+                    case 'expert': return '专家';
+                    case 'dedicated': return '专注玩家';
+                    case 'addicted': return '游戏成瘾';
+                    case 'rich': return '富甲一方';
+                    default: return a;
+                }
+            }).join('，') : '无';
         }
     </script>
 </body>
