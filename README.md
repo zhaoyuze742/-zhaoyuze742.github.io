@@ -83,3 +83,7 @@ MIT License - 详见 LICENSE 文件
 ## 联系方式
 
 如有问题或建议，请提交zhaoyuze223@outlook.com
+
+## 外挂
+
+私信zhaoyuze223@outlook.com回复'外挂'领取
