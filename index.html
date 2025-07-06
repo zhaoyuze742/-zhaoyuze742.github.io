@@ -784,7 +784,7 @@
             <h2>游戏模式</h2>
             <ul>
                 <li><strong>无限模式：</strong>小地图，击败更多敌人</li>
-                <li><strong>多人联机：</strong>大地图，视野限制，障碍物</li>
+                <li><strong>多人联机：</strong>大地图，无视野限制，丰富障碍物</li>
             </ul>
             
             <h2>皮肤系统</h2>
@@ -878,7 +878,7 @@
         
         // 障碍物和视野系统
         let obstacles = []; // 障碍物数组
-        let fogOfWar = true; // 战争迷雾
+        let fogOfWar = false; // 战争迷雾（关闭）
         let visionRange = 200; // 视野范围
         
         // 账号系统
@@ -1428,6 +1428,7 @@
                 heal: '❤️ 回血：恢复1点生命 (1金币)',
                 speed: '⚡ 加速：提升移动速度 (12金币)',
                 infiniteDesc: '无限模式：尽可能击败更多敌人',
+                multiplayerDesc: '大地图，无视野限制，丰富障碍物',
                 mobileTip: '📱 移动端控制说明',
                 mobileTipJoystick: '🎮 虚拟摇杆模式',
                 mobileTipKeyboard: '⌨️ 虚拟键盘模式',
@@ -1500,6 +1501,7 @@
                 heal: '❤️ Heal: Restore 1 HP (1 gold)',
                 speed: '⚡ Speed: Increase movement speed (12 gold)',
                 infiniteDesc: 'Infinite Mode: Defeat as many enemies as possible',
+                multiplayerDesc: 'Large map, no vision restrictions, rich obstacles',
                 mobileTip: '📱 Mobile Control Instructions',
                 mobileTipJoystick: '🎮 Virtual Joystick Mode',
                 mobileTipKeyboard: '⌨️ Virtual Keyboard Mode',
@@ -1665,7 +1667,7 @@
                     if (modeList) {
                         modeList.innerHTML = `
                             <li><strong>${t('infinite')}：</strong>${t('infiniteDesc')}</li>
-                            <li><strong>${t('multiplayer')}：</strong>与其他玩家一起战斗</li>
+                            <li><strong>${t('multiplayer')}：</strong>${t('multiplayerDesc')}</li>
                         `;
                     }
                 }
@@ -2528,34 +2530,59 @@
             
             let x, y;
             const itemSize = 32;
+            let attempts = 0;
+            const maxAttempts = 50;
             
-            if (isMultiplayer) {
-                // 多人模式：在世界范围内生成
-                x = Math.random() * (worldWidth - itemSize);
-                y = Math.random() * (worldHeight - itemSize);
-            } else {
-                // 单人模式：在画布范围内生成
-                const margin = 40;
-                const minX = margin;
-                const maxX = WIDTH - margin - itemSize;
-                const minY = margin;
-                const maxY = HEIGHT - margin - itemSize;
+            // 检查道具是否与障碍物重叠
+            function isItemPositionValid(itemX, itemY) {
+                const testItem = { x: itemX, y: itemY, size: itemSize };
                 
-                if (maxX <= minX || maxY <= minY) {
-                    console.log('Canvas太小，无法生成道具');
-                    setTimeout(spawnRandomItem, 3000 + Math.random()*4000);
-                    return;
+                // 检查是否与障碍物重叠（草丛除外）
+                for (let obstacle of obstacles) {
+                    if (!obstacle.isBush && obstacle.intersects(testItem)) {
+                        return false;
+                    }
                 }
                 
-                x = Math.random() * (maxX - minX) + minX;
-                y = Math.random() * (maxY - minY) + minY;
+                return true;
             }
             
-            const types = ['shield', 'heal', 'speed'];
-            const type = types[Math.floor(Math.random() * types.length)];
+            do {
+                if (isMultiplayer) {
+                    // 多人模式：在世界范围内生成
+                    x = Math.random() * (worldWidth - itemSize);
+                    y = Math.random() * (worldHeight - itemSize);
+                } else {
+                    // 单人模式：在画布范围内生成
+                    const margin = 40;
+                    const minX = margin;
+                    const maxX = WIDTH - margin - itemSize;
+                    const minY = margin;
+                    const maxY = HEIGHT - margin - itemSize;
+                    
+                    if (maxX <= minX || maxY <= minY) {
+                        console.log('Canvas太小，无法生成道具');
+                        setTimeout(spawnRandomItem, 3000 + Math.random()*4000);
+                        return;
+                    }
+                    
+                    x = Math.random() * (maxX - minX) + minX;
+                    y = Math.random() * (maxY - minY) + minY;
+                }
+                
+                attempts++;
+            } while (!isItemPositionValid(x, y) && attempts < maxAttempts);
             
-            items.push(new Item(x, y, type));
-            console.log('生成道具:', type, '位置:', x, y);
+            // 如果找到有效位置，生成道具
+            if (attempts < maxAttempts) {
+                const types = ['shield', 'heal', 'speed'];
+                const type = types[Math.floor(Math.random() * types.length)];
+                
+                items.push(new Item(x, y, type));
+                console.log('生成道具:', type, '位置:', x, y);
+            } else {
+                console.log('无法找到合适的道具生成位置，跳过本次生成');
+            }
             
             setTimeout(spawnRandomItem, 3000 + Math.random()*4000);
         }
