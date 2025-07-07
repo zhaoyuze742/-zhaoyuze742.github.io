@@ -2412,19 +2412,25 @@
                 }
                 
                 // 检查障碍物碰撞（草丛除外）
-                obstacles.forEach((obstacle, index) => {
-                    // 草丛允许子弹通过
+                for (let i = 0; i < obstacles.length; i++) {
+                    const obstacle = obstacles[i];
                     if (!obstacle.isBush && obstacle.intersects(this)) {
                         if (this.isAdminBullet) {
-                            // 管理员子弹可以破坏障碍物
-                            obstacles.splice(index, 1);
-                            // 创建爆炸效果
+                            obstacles.splice(i, 1);
                             explosions.push(new Explosion(this.x, this.y));
-                            console.log('管理员子弹破坏了障碍物');
+                            this.alive = false;
+                            break;
+                        } else if (obstacle.hp != null) {
+                            obstacle.hp--;
+                            if (obstacle.hp <= 0) {
+                                obstacles.splice(i, 1);
+                                explosions.push(new Explosion(this.x, this.y));
+                            }
+                            this.alive = false;
+                            break;
                         }
-                        this.alive = false;
                     }
-                });
+                }
             }
             
             draw(cameraX = 0, cameraY = 0) {
@@ -2624,6 +2630,7 @@
                 this.type = type; // 'wall', 'rock', 'tree', 'bush'
                 this.color = this.getColor();
                 this.isBush = type === 'bush'; // 是否为树丛
+                this.hp = (type === 'wall') ? 3 : (type === 'rock' ? 5 : null); // 墙壁3，石头5，其他null
             }
             
             getColor() {
@@ -4910,6 +4917,9 @@
         let netPlayers = {};
         let netBullets = [];
         let netItems = [];
+        let netAIPlayers = [];
+        let netExplosions = [];
+        let netSkins = {};
         // ... existing code ...
         // WebSocket联机相关：连接服务器
         function connectWebSocket() {
@@ -4924,6 +4934,9 @@
                     data.players.forEach(p => { netPlayers[p.id] = p; });
                     netBullets = data.bullets || [];
                     netItems = data.items || [];
+                    netAIPlayers = data.aiPlayers || [];
+                    netExplosions = data.explosions || [];
+                    netSkins = data.skins || {};
                 }
             };
             ws.onclose = () => { setTimeout(connectWebSocket, 2000); };
@@ -4936,14 +4949,21 @@
                 ws.send(JSON.stringify({
                     type: 'update',
                     player: {
-                        x: player.x, y: player.y, dir: player.dir, hp: playerHP, alive: player.alive, name: playerName
+                        x: player.x, y: player.y, dir: player.dir, hp: playerHP, alive: player.alive, name: playerName, skin: currentSkin
                     },
                     bullets: bullets.map(b => ({
                         x: b.x, y: b.y, dx: b.dx, dy: b.dy, fromPlayer: b.fromPlayer, alive: b.alive
                     })),
                     items: items.map(i => ({
                         x: i.x, y: i.y, type: i.type, active: i.active
-                    }))
+                    })),
+                    aiPlayers: enemies ? enemies.map(e => ({
+                        x: e.x, y: e.y, dir: e.dir, hp: e.hp || 3, alive: e.alive, name: e.name
+                    })) : [],
+                    explosions: explosions ? explosions.map(ex => ({
+                        x: ex.x, y: ex.y, life: ex.life, maxLife: ex.maxLife
+                    })) : [],
+                    skin: currentSkin
                 }));
             }
         }
@@ -4956,7 +4976,14 @@
                 ctx.save();
                 ctx.translate(p.x - cameraX + TANK_SIZE/2, p.y - cameraY + TANK_SIZE/2);
                 ctx.rotate(p.dir);
-                ctx.fillStyle = '#00bfff';
+                // 皮肤
+                let skinColor = skins[p.skin] ? skins[p.skin].color : '#00bfff';
+                if (skinColor === 'rainbow') {
+                    const hue = (frameCount * 2) % 360;
+                    ctx.fillStyle = `hsl(${hue}, 70%, 50%)`;
+                } else {
+                    ctx.fillStyle = skinColor;
+                }
                 ctx.fillRect(-TANK_SIZE/2, -TANK_SIZE/2, TANK_SIZE, TANK_SIZE);
                 ctx.restore();
                 // 显示昵称
@@ -4965,6 +4992,17 @@
                 ctx.font = '12px Arial';
                 ctx.textAlign = 'center';
                 ctx.fillText(p.name || '玩家', p.x - cameraX + TANK_SIZE/2, p.y - cameraY - 10);
+                ctx.restore();
+            }
+        });
+        // 绘制同步的AI
+        netAIPlayers.forEach(e => {
+            if (e.alive) {
+                ctx.save();
+                ctx.translate(e.x - cameraX + TANK_SIZE/2, e.y - cameraY + TANK_SIZE/2);
+                ctx.rotate(e.dir);
+                ctx.fillStyle = '#f00';
+                ctx.fillRect(-TANK_SIZE/2, -TANK_SIZE/2, TANK_SIZE, TANK_SIZE);
                 ctx.restore();
             }
         });
@@ -4984,7 +5022,105 @@
             ctx.fill();
             ctx.restore();
         });
+        // 绘制同步的爆炸
+        netExplosions.forEach(ex => {
+            ctx.save();
+            ctx.globalAlpha = ex.life / ex.maxLife;
+            ctx.beginPath();
+            ctx.arc(ex.x - cameraX, ex.y - cameraY, (ex.maxLife - ex.life) * 2, 0, 2 * Math.PI);
+            ctx.fillStyle = 'rgba(255, 100, 0, 0.8)';
+            ctx.fill();
+            ctx.restore();
+        });
         // ... existing code ...
+        // 子弹碰撞障碍物
+        obstacles.forEach((obstacle, index) => {
+            if (!obstacle.isBush && obstacle.intersects(this)) {
+                if (this.isAdminBullet) {
+                    // 管理员子弹可以破坏障碍物
+                    obstacles.splice(index, 1);
+                    explosions.push(new Explosion(this.x, this.y));
+                } else if (obstacle.hp != null) {
+                    obstacle.hp--;
+                    if (obstacle.hp <= 0) {
+                        obstacles.splice(index, 1);
+                        explosions.push(new Explosion(this.x, this.y));
+                    }
+                }
+                this.alive = false;
+            }
+        });
+        // ... existing code ...
+        // 草丛生成优化
+        function generateBushes(count) {
+            const bushMinDist = 60;
+            let tries = 0;
+            let placed = 0;
+            while (placed < count && tries < count * 10) {
+                const x = Math.random() * (worldWidth - 60);
+                const y = Math.random() * (worldHeight - 60);
+                const size = 30 + Math.random() * 40;
+                let ok = true;
+                for (let ob of obstacles) {
+                    if (ob.isBush) {
+                        const dx = (ob.x + ob.width/2) - (x + size/2);
+                        const dy = (ob.y + ob.height/2) - (y + size/2);
+                        if (Math.sqrt(dx*dx + dy*dy) < bushMinDist) {
+                            ok = false;
+                            break;
+                        }
+                    }
+                }
+                if (ok) {
+                    obstacles.push(new Obstacle(x, y, size, size, 'bush'));
+                    placed++;
+                }
+                tries++;
+            }
+        }
+        // ... existing code ...
+        // 在generateObstacles里替换草丛生成
+        // 生成树丛（隐身区域）
+        generateBushes(60);
+        // ... existing code ...
+        // AI生成不在障碍物里
+        function spawnAI() {
+            if (enemies.length >= maxPlayers) return;
+            let x, y;
+            let attempts = 0;
+            let isSafe = false;
+            while (!isSafe && attempts < 100) {
+                x = Math.random() * (worldWidth - TANK_SIZE);
+                y = Math.random() * (worldHeight - TANK_SIZE);
+                attempts++;
+                // 检查不与障碍物重叠
+                const testTank = { x: x, y: y, size: TANK_SIZE };
+                isSafe = true;
+                for (let ob of obstacles) {
+                    if (ob.intersects(testTank)) {
+                        isSafe = false;
+                        break;
+                    }
+                }
+                // 检查不在玩家附近
+                if (isSafe && Math.abs(x - player.x) < 300 && Math.abs(y - player.y) < 300) {
+                    isSafe = false;
+                }
+            }
+            if (isSafe) {
+                enemies.push(new Tank(x, y, '#f00'));
+            }
+        }
+        // ... existing code ...
+
+        // 管理员专属子弹Q键发射
+        window.addEventListener('keydown', function(e) {
+            if (e.key.toLowerCase() === 'q' && currentUsername === '000' && gameState === 'playing') {
+                if (player && player.alive) {
+                    player.fire(true); // 管理员专属子弹
+                }
+            }
+        });
     </script>
 </body>
 </html> 
