@@ -63,6 +63,91 @@
             max-width: 100%;
             height: auto;
             margin-bottom: 10px;
+            position: relative;
+        }
+        
+        .game-hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        .hud-item {
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .hud-hp {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        
+        .hud-heart {
+            width: 16px;
+            height: 16px;
+            background: #ff4444;
+            clip-path: polygon(50% 0%, 100% 35%, 100% 65%, 50% 100%, 0% 65%, 0% 35%);
+            position: relative;
+        }
+        
+        .hud-heart::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 10px;
+            background: inherit;
+            border-radius: 50% 50% 0 0;
+        }
+        
+        .hud-heart.empty {
+            background: #666;
+        }
+        
+        .shop-hotkey {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        .bulk-purchase {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 5px 0;
+        }
+        
+        .bulk-input {
+            width: 60px;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+        
+        .bulk-btn {
+            padding: 5px 10px;
+            font-size: 12px;
         }
         
         .panel {
@@ -156,8 +241,21 @@
             width: 20px;
             height: 20px;
             background: #ff4444;
-            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            clip-path: polygon(50% 0%, 100% 35%, 100% 65%, 50% 100%, 0% 65%, 0% 35%);
             transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .hp-heart::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 12px;
+            background: inherit;
+            border-radius: 50% 50% 0 0;
         }
         
         .hp-heart.empty {
@@ -636,6 +734,21 @@
                 opacity: 0;
             }
         }
+        
+        @keyframes itemEffect {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 0;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -673,19 +786,33 @@
             </div>
             <div class="topbar">
                 <span id="goldDisplay">金币：0</span>
-                <div class="hp-container" id="hpContainer">
-                    <div class="hp-heart"></div>
-                    <div class="hp-heart"></div>
-                    <div class="hp-heart"></div>
-                </div>
                 <span id="progressDisplay">击败：0</span>
                 <span id="modeDisplay">无限模式</span>
                 <span id="adminStatus" style="display: none; color: #00ff00; font-weight: bold; background: rgba(0,255,0,0.2); padding: 5px 10px; border-radius: 5px;">👑 管理员</span>
                 <span id="autoFireStatus" style="display: none; color: #ff4444; font-weight: bold; background: rgba(255,68,68,0.2); padding: 5px 10px; border-radius: 5px;">🎯 自动发射</span>
-                <button id="pauseBtn">暂停</button>
-                <button id="shopBtn">商城</button>
+                <button id="shopBtn">商城 (B)</button>
+                <button id="fullscreenBtn">全屏</button>
             </div>
             <canvas id="gameCanvas" width="800" height="600"></canvas>
+            <div class="game-hud">
+                <div class="hud-item">
+                    <span>❤️</span>
+                    <div class="hud-hp" id="hudHpContainer">
+                        <div class="hud-heart"></div>
+                        <div class="hud-heart"></div>
+                        <div class="hud-heart"></div>
+                        <div class="hud-heart"></div>
+                        <div class="hud-heart"></div>
+                    </div>
+                </div>
+                <div class="hud-item">
+                    <span>🎯</span>
+                    <span id="hudProgress">击败：0</span>
+                </div>
+            </div>
+            <div class="shop-hotkey">
+                按 B 打开商城
+            </div>
             <div id="pointerLockHint" class="pointer-lock-hint">
                 <span id="pointerLockText">点击画布锁定鼠标 | 按ESC退出</span>
             </div>
@@ -738,8 +865,7 @@
                 <ul>
                     <li><strong>移动</strong>：方向键或WASD</li>
                     <li><strong>射击</strong>：空格键</li>
-                    <li><strong>暂停</strong>：P键</li>
-                    <li><strong>商城</strong>：点击商城按钮</li>
+                    <li><strong>商城</strong>：B键或点击商城按钮</li>
                 </ul>
             </div>
             
@@ -793,7 +919,6 @@
         <!-- 右下角功能键 -->
         <div class="vk-func">
             <div class="vk-fire vk-btn action" data-key=" " id="shootKeyBtn">射击</div>
-            <div class="vk-pause vk-btn action" data-key="p" id="pauseKeyBtn">暂停</div>
             <div class="vk-switch vk-btn control" id="switchBackBtn">🎮</div>
         </div>
         <!-- 底部横排方向键 -->
@@ -824,21 +949,27 @@
         const BULLET_SIZE = 8;
         const PLAYER_SPEED = 3;
         const ENEMY_SPEED = 2;
-        const BULLET_SPEED = 6;
+        const BULLET_SPEED = 8; // 增加子弹速度，支持远程狙击
+        const BULLET_RANGE = 800; // 子弹最大射程
         
         // 游戏变量
         let player, enemies, bullets, keys, frameCount, gameState;
         let gold = 0;
         let pause = false;
-        let playerHP = 3;
+        let playerHP = 5;
         let enemiesDefeated = 0;
         let items = [];
         let shieldActive = false;
         let shieldTimer = 0;
         let speedActive = false;
         let speedTimer = 0;
+        let itemCounts = {
+            shield: 0,
+            heal: 0,
+            speed: 0
+        };
         let gameMode = 'infinite';
-        let maxHP = 3;
+        let maxHP = 5;
         let currentLanguage = 'zh'; // 默认中文
         let mouseX, mouseY; // 鼠标位置
         let explosions = []; // 爆炸效果
@@ -848,12 +979,14 @@
         let players = []; // 所有玩家（包括自己）
         let myPlayerId = null;
         let isMultiplayer = false;
-        let worldWidth = 2000; // 大场地宽度
-        let worldHeight = 1500; // 大场地高度
+        let worldWidth = 10000; // 无限大世界宽度
+        let worldHeight = 10000; // 无限大世界高度
         let cameraX = 0;
         let cameraY = 0;
         let aiPlayers = []; // AI玩家
-        let maxPlayers = 6; // 最大玩家数
+        let maxPlayers = 20; // 最大AI数量
+        let aiSpawnTimer = 0; // AI生成计时器
+        let aiSpawnInterval = 3000; // AI生成间隔（毫秒）
         
         // 障碍物和视野系统
         let obstacles = []; // 障碍物数组
@@ -1393,6 +1526,11 @@
         // 多人联机变量
         let socket = null;
         
+        // TODO: 部署到GitHub Pages后，将以下URL替换为你的GitHub Pages地址
+        // const SERVER_URL = 'https://yourusername.github.io/tank-battle';
+        // 或者使用WebSocket服务器（需要单独部署）
+        // const WS_URL = 'wss://your-websocket-server.com';
+        
         // 多语言文本
         const texts = {
             zh: {
@@ -1403,7 +1541,7 @@
                 gold: '金币：',
                 progress: '进度：',
                 defeated: '击败：',
-                pause: '暂停',
+                pause: '暂停', // 保留用于多语言系统，但实际不使用
                 continue: '继续',
                 shop: '商城',
                 close: '关闭',
@@ -1411,6 +1549,8 @@
                 menu: '主菜单',
                 victory: '胜利！',
                 gameOver: '游戏失败',
+                fullscreen: '全屏',
+                exitFullscreen: '退出全屏',
                 instructions: '游戏说明',
                 controls: '移动端控制',
                 desktopControls: '电脑端控制',
@@ -1422,7 +1562,7 @@
                 defeatEnemies: '击败敌人获得金币',
                 desktopMove: '坦克自动朝向鼠标指针，点击画布锁定鼠标，移动：W/S或上下方向键，撞击敌人可消灭敌人',
                 desktopShoot: '射击：空格键',
-                desktopPause: '暂停：P键',
+                desktopPause: '商城：B键或点击按钮',
                 desktopShop: '商城：点击商城按钮',
                 virtualJoystick: '🎮 虚拟摇杆模式',
                 virtualKeyboard: '⌨️ 虚拟键盘模式',
@@ -1432,7 +1572,7 @@
                 wasdKeys: '• WASD：移动控制',
                 arrowKeys: '• 方向键：移动控制',
                 shootButton: '• 射击：开火',
-                pauseButton: '• 暂停：暂停游戏',
+                pauseButton: '• Shop: Press B to open shop',
                 backButton: '• 🎮 按钮：返回摇杆模式',
                 joystickMode: '🎮 摇杆模式：上下移动 + 左右旋转 + 射击',
                 keyboardMode: '⌨️ 键盘模式：A/D旋转 + W/S移动 + 射击',
@@ -1484,6 +1624,8 @@
                 menu: 'Main Menu',
                 victory: 'Victory!',
                 gameOver: 'Game Over',
+                fullscreen: 'Fullscreen',
+                exitFullscreen: 'Exit Fullscreen',
                 instructions: 'Game Instructions',
                 controls: 'Mobile Controls',
                 desktopControls: 'Desktop Controls',
@@ -1495,7 +1637,7 @@
                 defeatEnemies: 'Defeat enemies to earn gold',
                 desktopMove: 'Tank automatically faces mouse pointer, click canvas to lock mouse, Move: W/S or up/down arrow keys, ram enemies to destroy them',
                 desktopShoot: 'Shoot: Spacebar',
-                desktopPause: 'Pause: P key',
+                desktopPause: 'Shop: B key or click button',
                 desktopShop: 'Shop: Click Shop button',
                 virtualJoystick: '🎮 Virtual Joystick Mode',
                 virtualKeyboard: '⌨️ Virtual Keyboard Mode',
@@ -1580,8 +1722,9 @@
             // 更新游戏界面
             document.getElementById('goldDisplay').textContent = t('gold') + gold;
             document.getElementById('modeDisplay').textContent = t('infinite');
-            document.getElementById('pauseBtn').textContent = t('pause');
+            // 移除暂停按钮相关代码，多人联机不支持暂停
             document.getElementById('shopBtn').textContent = t('shop');
+            document.getElementById('fullscreenBtn').textContent = t('fullscreen');
             document.getElementById('closeShopBtn').textContent = t('close');
             document.getElementById('restartBtn').textContent = t('restart');
             document.getElementById('menuBtn').textContent = t('menu');
@@ -1699,14 +1842,12 @@
             
             // 更新虚拟键盘按钮文本
             const shootBtn = document.getElementById('shootKeyBtn');
-            const pauseBtn = document.getElementById('pauseKeyBtn');
             const wBtn = document.querySelector('.vk-w');
             const aBtn = document.querySelector('.vk-a');
             const sBtn = document.querySelector('.vk-s');
             const dBtn = document.querySelector('.vk-d');
             
             if (shootBtn) shootBtn.textContent = currentLanguage === 'zh' ? '射击' : 'Shoot';
-            if (pauseBtn) pauseBtn.textContent = currentLanguage === 'zh' ? '暂停' : 'Pause';
             if (wBtn) wBtn.textContent = currentLanguage === 'zh' ? '前进' : 'Forward';
             if (aBtn) aBtn.textContent = currentLanguage === 'zh' ? '左转' : 'Left';
             if (sBtn) sBtn.textContent = currentLanguage === 'zh' ? '后退' : 'Back';
@@ -1721,21 +1862,34 @@
             // 检测是否为移动设备
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             
-            // 移动端需要为控制元素留出更多空间
-            const containerHeight = isMobile ? window.innerHeight * 0.4 : window.innerHeight * 0.5;
+            // 检查是否在全屏模式
+            const isFullscreen = !!document.fullscreenElement || 
+                                !!document.webkitFullscreenElement || 
+                                !!document.msFullscreenElement;
             
-            const aspectRatio = 800 / 600;
-            let newWidth = containerWidth;
-            let newHeight = containerWidth / aspectRatio;
+            let newWidth, newHeight;
             
-            if (newHeight > containerHeight) {
-                newHeight = containerHeight;
-                newWidth = containerHeight * aspectRatio;
+            if (isFullscreen) {
+                // 全屏模式：使用整个屏幕
+                newWidth = window.innerWidth;
+                newHeight = window.innerHeight;
+            } else {
+                // 正常模式：使用容器尺寸
+                const containerHeight = isMobile ? window.innerHeight * 0.4 : window.innerHeight * 0.5;
+                
+                const aspectRatio = 800 / 600;
+                newWidth = containerWidth;
+                newHeight = containerWidth / aspectRatio;
+                
+                if (newHeight > containerHeight) {
+                    newHeight = containerHeight;
+                    newWidth = containerHeight * aspectRatio;
+                }
+                
+                // 确保最小尺寸
+                newWidth = Math.max(newWidth, 400);
+                newHeight = Math.max(newHeight, 300);
             }
-            
-            // 确保最小尺寸
-            newWidth = Math.max(newWidth, 400);
-            newHeight = Math.max(newHeight, 300);
             
             canvas.style.width = newWidth + 'px';
             canvas.style.height = newHeight + 'px';
@@ -1747,7 +1901,7 @@
             WIDTH = newWidth;
             HEIGHT = newHeight;
             
-            console.log('Canvas尺寸已调整:', WIDTH, 'x', HEIGHT, '设备类型:', isMobile ? '移动端' : '桌面端');
+            console.log('Canvas尺寸已调整:', WIDTH, 'x', HEIGHT, '设备类型:', isMobile ? '移动端' : '桌面端', '全屏:', isFullscreen);
         }
         
         // 工具函数
@@ -1877,6 +2031,22 @@
                     return;
                 }
                 
+                // 草丛隐身检查：在草丛中的坦克对其他坦克不可见
+                if (this.isHidden && !this.isPlayer) {
+                    // 检查玩家是否在草丛中
+                    let playerInBush = false;
+                    obstacles.forEach(obstacle => {
+                        if (obstacle.isBush && obstacle.intersects(player)) {
+                            playerInBush = true;
+                        }
+                    });
+                    
+                    // 如果玩家不在草丛中，草丛中的AI不可见
+                    if (!playerInBush) {
+                        return;
+                    }
+                }
+                
                 // 视野检查（只有玩家坦克不受视野限制）
                 if (!this.isPlayer && isMultiplayer) {
                     if (!isInVisionRange(this.x, this.y, player.x, player.y) || 
@@ -1914,9 +2084,24 @@
                 // 绘制坦克主体
                 ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
                 
-                // 绘制炮管
+                // 绘制履带
+                ctx.fillStyle = '#333';
+                ctx.fillRect(-this.size/2 - 6, -this.size/2, 6, this.size); // 左履带更宽
+                ctx.fillRect(this.size/2, -this.size/2, 6, this.size);     // 右履带更宽
+                ctx.fillStyle = '#555';
+                for (let i = 0; i < 5; i++) {
+                    const y = -this.size/2 + i * (this.size / 4);
+                    ctx.fillRect(-this.size/2 - 6, y, 6, 3);
+                    ctx.fillRect(this.size/2, y, 6, 3);
+                }
+                
+                // 绘制炮管（只向前30像素）
                 ctx.fillStyle = '#fff';
-                ctx.fillRect(-5, -this.size/2, 10, 20);
+                ctx.fillRect(-5, -8, 10, -30); // 向前伸长30像素
+                
+                // 删除瞄准线绘制
+                
+
                 
                 // 绘制坦克装饰
                 if (this.isPlayer && currentSkin && skins[currentSkin]) {
@@ -1934,6 +2119,94 @@
                     ctx.fillText(this.name, screenX + this.size/2, screenY - 10);
                     ctx.restore();
                 }
+            }
+            
+
+            
+            // 获取线段与矩形的交点
+            getLineIntersection(startX, startY, endX, endY, target) {
+                // 将目标坐标转换到坦克的局部坐标系
+                let targetX, targetY;
+                if (target.x !== undefined) {
+                    // 这是坦克或子弹
+                    targetX = target.x - this.x - this.size/2;
+                    targetY = target.y - this.y - this.size/2;
+                } else {
+                    // 这是障碍物
+                    targetX = target.x - this.x - this.size/2;
+                    targetY = target.y - this.y - this.size/2;
+                }
+                
+                // 旋转坐标到坦克朝向
+                const cos = Math.cos(-this.dir);
+                const sin = Math.sin(-this.dir);
+                const rotatedX = targetX * cos - targetY * sin;
+                const rotatedY = targetX * sin + targetY * cos;
+                
+                // 计算目标边界
+                let minX, maxX, minY, maxY;
+                if (target.size !== undefined) {
+                    // 坦克或子弹
+                    minX = rotatedX - target.size/2;
+                    maxX = rotatedX + target.size/2;
+                    minY = rotatedY - target.size/2;
+                    maxY = rotatedY + target.size/2;
+                } else {
+                    // 障碍物
+                    minX = rotatedX;
+                    maxX = rotatedX + target.width;
+                    minY = rotatedY;
+                    maxY = rotatedY + target.height;
+                }
+                
+                // 检查线段是否与矩形相交
+                const intersections = [];
+                
+                // 检查与垂直边的交点
+                if (Math.abs(endX - startX) > 0.001) {
+                    const slope = (endY - startY) / (endX - startX);
+                    const y1 = slope * (minX - startX) + startY;
+                    const y2 = slope * (maxX - startX) + startY;
+                    
+                    if (y1 >= minY && y1 <= maxY && startX <= minX && endX >= minX) {
+                        intersections.push({x: minX, y: y1});
+                    }
+                    if (y2 >= minY && y2 <= maxY && startX <= maxX && endX >= maxX) {
+                        intersections.push({x: maxX, y: y2});
+                    }
+                }
+                
+                // 检查与水平边的交点
+                if (Math.abs(endY - startY) > 0.001) {
+                    const slope = (endX - startX) / (endY - startY);
+                    const x1 = slope * (minY - startY) + startX;
+                    const x2 = slope * (maxY - startY) + startX;
+                    
+                    if (x1 >= minX && x1 <= maxX && startY <= minY && endY >= minY) {
+                        intersections.push({x: x1, y: minY});
+                    }
+                    if (x2 >= minX && x2 <= maxX && startY <= maxY && endY >= maxY) {
+                        intersections.push({x: x2, y: maxY});
+                    }
+                }
+                
+                // 返回最近的交点
+                if (intersections.length > 0) {
+                    let closest = intersections[0];
+                    let minDist = Math.sqrt(closest.x * closest.x + closest.y * closest.y);
+                    
+                    intersections.forEach(point => {
+                        const dist = Math.sqrt(point.x * point.x + point.y * point.y);
+                        if (dist < minDist) {
+                            minDist = dist;
+                            closest = point;
+                        }
+                    });
+                    
+                    return closest;
+                }
+                
+                return null;
             }
             
             // 绘制皮肤装饰
@@ -1971,8 +2244,8 @@
                     let dy = -Math.cos(this.dir) * BULLET_SPEED;
                     bullets.push(new Bullet(bx, by, dx, dy, this.isPlayer, isAdminBullet));
                     // 添加发射闪光效果
-                    let flashX = this.x + this.size/2 + Math.sin(this.dir) * (this.size/2 + 5);
-                    let flashY = this.y + this.size/2 - Math.cos(this.dir) * (this.size/2 + 5);
+                    let flashX = this.x + this.size/2 + Math.sin(this.dir) * (this.size/2 + 12); // 调整闪光位置到炮管前端
+                    let flashY = this.y + this.size/2 - Math.cos(this.dir) * (this.size/2 + 12);
                     muzzleFlashes.push(new MuzzleFlash(flashX, flashY, this.dir));
                     // 只有普通玩家和空格发射有冷却，管理员左键发射无冷却
                     if (!isAdminBullet) {
@@ -1985,6 +2258,108 @@
                 if (this.cooldown > 0) this.cooldown--;
                 if (this.hitFlash > 0) this.hitFlash--;
                 if (this.collisionCooldown > 0) this.collisionCooldown--;
+            }
+            
+            // 1. Tank类添加/替换drawAimingLine
+            drawAimingLine(ctx, cameraX = 0, cameraY = 0) {
+                // 炮管前端位置：从坦克中心向前38像素
+                const worldX = this.x + this.size/2 + Math.sin(this.dir) * 38;
+                const worldY = this.y + this.size/2 - Math.cos(this.dir) * 38;
+                
+                // 计算瞄准线方向向量（与炮管方向一致）
+                const dirX = Math.sin(this.dir);
+                const dirY = -Math.cos(this.dir);
+                
+                let minDist = 1000;
+                let hitX = worldX + dirX * minDist;
+                let hitY = worldY + dirY * minDist;
+                
+                // 检测与障碍物的碰撞
+                obstacles.forEach(ob => {
+                    if (!ob.isBush) {
+                        // 使用射线与矩形相交算法，避免除零错误
+                        let t1, t2, t3, t4;
+                        
+                        if (Math.abs(dirX) > 0.001) {
+                            t1 = (ob.x - worldX) / dirX;
+                            t2 = (ob.x + ob.width - worldX) / dirX;
+                        } else {
+                            t1 = t2 = (worldX >= ob.x && worldX <= ob.x + ob.width) ? 0 : -1;
+                        }
+                        
+                        if (Math.abs(dirY) > 0.001) {
+                            t3 = (ob.y - worldY) / dirY;
+                            t4 = (ob.y + ob.height - worldY) / dirY;
+                        } else {
+                            t3 = t4 = (worldY >= ob.y && worldY <= ob.y + ob.height) ? 0 : -1;
+                        }
+                        
+                        const tmin = Math.max(Math.min(t1, t2), Math.min(t3, t4));
+                        const tmax = Math.min(Math.max(t1, t2), Math.max(t3, t4));
+                        
+                        if (tmax >= 0 && tmin <= tmax && tmin < minDist) {
+                            minDist = tmin;
+                            hitX = worldX + dirX * tmin;
+                            hitY = worldY + dirY * tmin;
+                        }
+                    }
+                });
+                
+                // 检测与敌人的碰撞
+                enemies.forEach(enemy => {
+                    if (enemy.alive) {
+                        // 使用射线与矩形相交算法，避免除零错误
+                        let t1, t2, t3, t4;
+                        
+                        if (Math.abs(dirX) > 0.001) {
+                            t1 = (enemy.x - worldX) / dirX;
+                            t2 = (enemy.x + enemy.size - worldX) / dirX;
+                        } else {
+                            t1 = t2 = (worldX >= enemy.x && worldX <= enemy.x + enemy.size) ? 0 : -1;
+                        }
+                        
+                        if (Math.abs(dirY) > 0.001) {
+                            t3 = (enemy.y - worldY) / dirY;
+                            t4 = (enemy.y + enemy.size - worldY) / dirY;
+                        } else {
+                            t3 = t4 = (worldY >= enemy.y && worldY <= enemy.y + enemy.size) ? 0 : -1;
+                        }
+                        
+                        const tmin = Math.max(Math.min(t1, t2), Math.min(t3, t4));
+                        const tmax = Math.min(Math.max(t1, t2), Math.max(t3, t4));
+                        
+                        if (tmax >= 0 && tmin <= tmax && tmin < minDist) {
+                            minDist = tmin;
+                            hitX = worldX + dirX * tmin;
+                            hitY = worldY + dirY * tmin;
+                        }
+                    }
+                });
+                
+                // 绘制瞄准线
+                ctx.save();
+                ctx.strokeStyle = 'rgba(255,0,0,0.7)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([6,6]);
+                ctx.beginPath();
+                ctx.moveTo(worldX - cameraX, worldY - cameraY);
+                ctx.lineTo(hitX - cameraX, hitY - cameraY);
+                ctx.stroke();
+                
+                // 绘制终点红点
+                ctx.fillStyle = '#ff0000';
+                ctx.beginPath();
+                ctx.arc(hitX - cameraX, hitY - cameraY, 5, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // 添加红点外圈
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(hitX - cameraX, hitY - cameraY, 7, 0, 2 * Math.PI);
+                ctx.stroke();
+                
+                ctx.restore();
             }
         }
         
@@ -2025,6 +2400,15 @@
                 if (this.x < -this.size || this.x > maxX || this.y < -this.size || this.y > maxY) {
                     this.alive = false;
                     return;
+                }
+                
+                // 检查子弹射程（只有玩家子弹有射程限制）
+                if (this.fromPlayer) {
+                    const distanceTraveled = Math.sqrt(this.dx * this.dx + this.dy * this.dy) * this.trail.length;
+                    if (distanceTraveled > BULLET_RANGE) {
+                        this.alive = false;
+                        return;
+                    }
                 }
                 
                 // 检查障碍物碰撞（草丛除外）
@@ -2431,6 +2815,12 @@
             shieldTimer = 0;
             speedActive = false;
             speedTimer = 0;
+            // 重置道具数量
+            itemCounts = {
+                shield: 0,
+                heal: 0,
+                speed: 0
+            };
             updateHPDisplay();
             updateProgressDisplay();
             updateGoldDisplay();
@@ -2455,64 +2845,131 @@
         // 生成AI玩家
         function generateAIPlayers() {
             enemies = [];
-            const aiCount = 3; // 3个AI敌人
-            
+            const aiCount = 20; // 初始20个AI敌人
             for (let i = 0; i < aiCount; i++) {
-                let x, y;
-                let attempts = 0;
-                
-                // 确保AI玩家不会生成在玩家附近或障碍物上
-                do {
-                    x = Math.random() * (worldWidth - TANK_SIZE);
-                    y = Math.random() * (worldHeight - TANK_SIZE);
-                    attempts++;
-                } while (
-                    Math.abs(x - player.x) < 200 && 
-                    Math.abs(y - player.y) < 200 && 
-                    attempts < 50
-                );
-                
-                enemies.push(new Tank(x, y, '#f00'));
+                spawnAI();
             }
         }
         
-        // 生成障碍物（多人模式）
+        // 生成单个AI
+        function spawnAI() {
+            if (enemies.length >= maxPlayers) return; // 限制最大AI数量
+            
+            let x, y;
+            let attempts = 0;
+            
+            // 确保AI不会生成在玩家附近或障碍物上
+            do {
+                x = Math.random() * (worldWidth - TANK_SIZE);
+                y = Math.random() * (worldHeight - TANK_SIZE);
+                attempts++;
+            } while (
+                Math.abs(x - player.x) < 300 && 
+                Math.abs(y - player.y) < 300 && 
+                attempts < 100
+            );
+            
+            enemies.push(new Tank(x, y, '#f00'));
+        }
+        
+        // 生成障碍物（多人模式）- 真正的迷宫式布局
         function generateObstacles() {
             obstacles = [];
             
-            // 生成墙壁
-            for (let i = 0; i < 15; i++) {
-                const x = Math.random() * (worldWidth - 100);
-                const y = Math.random() * (worldHeight - 100);
-                const width = 60 + Math.random() * 80;
-                const height = 20 + Math.random() * 40;
-                
-                obstacles.push(new Obstacle(x, y, width, height, 'wall'));
+            // 生成真正的迷宫结构
+            const gridSize = 150;
+            const cols = Math.floor(worldWidth / gridSize);
+            const rows = Math.floor(worldHeight / gridSize);
+            
+            // 创建迷宫网格
+            const maze = [];
+            for (let row = 0; row < rows; row++) {
+                maze[row] = [];
+                for (let col = 0; col < cols; col++) {
+                    maze[row][col] = { walls: { top: true, right: true, bottom: true, left: true }, visited: false };
+                }
             }
             
-            // 生成岩石
-            for (let i = 0; i < 20; i++) {
+            // 使用深度优先搜索生成迷宫
+            function generateMaze(row, col) {
+                maze[row][col].visited = true;
+                
+                const directions = [
+                    { dr: -1, dc: 0, wall: 'top', opposite: 'bottom' },
+                    { dr: 0, dc: 1, wall: 'right', opposite: 'left' },
+                    { dr: 1, dc: 0, wall: 'bottom', opposite: 'top' },
+                    { dr: 0, dc: -1, wall: 'left', opposite: 'right' }
+                ];
+                
+                // 随机打乱方向
+                for (let i = directions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [directions[i], directions[j]] = [directions[j], directions[i]];
+                }
+                
+                for (const dir of directions) {
+                    const newRow = row + dir.dr;
+                    const newCol = col + dir.dc;
+                    
+                    if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols && !maze[newRow][newCol].visited) {
+                        maze[row][col].walls[dir.wall] = false;
+                        maze[newRow][newCol].walls[dir.opposite] = false;
+                        generateMaze(newRow, newCol);
+                    }
+                }
+            }
+            
+            // 从随机位置开始生成迷宫
+            const startRow = Math.floor(Math.random() * rows);
+            const startCol = Math.floor(Math.random() * cols);
+            generateMaze(startRow, startCol);
+            
+            // 根据迷宫生成墙壁
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const cell = maze[row][col];
+                    const x = col * gridSize;
+                    const y = row * gridSize;
+                    
+                    // 生成墙壁
+                    if (cell.walls.top) {
+                        obstacles.push(new Obstacle(x, y, gridSize, 15, 'wall'));
+                    }
+                    if (cell.walls.left) {
+                        obstacles.push(new Obstacle(x, y, 15, gridSize, 'wall'));
+                    }
+                    if (cell.walls.bottom) {
+                        obstacles.push(new Obstacle(x, y + gridSize - 15, gridSize, 15, 'wall'));
+                    }
+                    if (cell.walls.right) {
+                        obstacles.push(new Obstacle(x + gridSize - 15, y, 15, gridSize, 'wall'));
+                    }
+                }
+            }
+            
+            // 生成岩石作为装饰
+            for (let i = 0; i < 30; i++) {
                 const x = Math.random() * (worldWidth - 60);
                 const y = Math.random() * (worldHeight - 60);
-                const size = 30 + Math.random() * 30;
+                const size = 20 + Math.random() * 30;
                 
                 obstacles.push(new Obstacle(x, y, size, size, 'rock'));
             }
             
-            // 生成树木
-            for (let i = 0; i < 25; i++) {
+            // 生成树木作为装饰
+            for (let i = 0; i < 40; i++) {
                 const x = Math.random() * (worldWidth - 40);
                 const y = Math.random() * (worldHeight - 40);
-                const size = 20 + Math.random() * 20;
+                const size = 15 + Math.random() * 25;
                 
                 obstacles.push(new Obstacle(x, y, size, size, 'tree'));
             }
             
             // 生成树丛（隐身区域）
-            for (let i = 0; i < 30; i++) {
-                const x = Math.random() * (worldWidth - 50);
-                const y = Math.random() * (worldHeight - 50);
-                const size = 40 + Math.random() * 20;
+            for (let i = 0; i < 60; i++) {
+                const x = Math.random() * (worldWidth - 60);
+                const y = Math.random() * (worldHeight - 60);
+                const size = 30 + Math.random() * 40;
                 
                 obstacles.push(new Obstacle(x, y, size, size, 'bush'));
             }
@@ -2658,12 +3115,14 @@
         }
         
         function updateHPDisplay() {
-            const container = document.getElementById('hpContainer');
+            const container = document.getElementById('hudHpContainer');
+            if (!container) return;
+            
             container.innerHTML = '';
             
             for (let i = 0; i < maxHP; i++) {
                 const heart = document.createElement('div');
-                heart.className = 'hp-heart';
+                heart.className = 'hud-heart';
                 if (i >= playerHP) {
                     heart.classList.add('empty');
                 }
@@ -2673,6 +3132,10 @@
         
         function updateProgressDisplay() {
             document.getElementById('progressDisplay').textContent = t('defeated') + enemiesDefeated;
+            const hudProgress = document.getElementById('hudProgress');
+            if (hudProgress) {
+                hudProgress.textContent = t('defeated') + enemiesDefeated;
+            }
         }
         
         function showGameOverPanel(text) {
@@ -2705,12 +3168,19 @@
                 // 管理员账户显示免费，普通账户显示价格
                 const isAdmin = currentUsername === '000';
                 const priceText = isAdmin ? '免费' : `${item.price}${currentLanguage === 'zh' ? '金币' : ' gold'}`;
-                const buttonText = isAdmin ? '免费使用' : t('buy');
+                const buttonText = isAdmin ? '免费获取' : t('buy');
                 
-                html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;margin:5px 0;background:rgba(255,255,255,0.1);border-radius:8px;">
-                    <span>${item.name}</span>
-                    <span style="color: ${isAdmin ? '#00ff00' : '#fff'};">${priceText}</span>
-                    <button onclick="buyItem('${item.type}')" style="background: ${isAdmin ? 'linear-gradient(145deg, #28a745, #20c997)' : 'linear-gradient(145deg, #007bff, #0056b3)'};">${buttonText}</button>
+                html += `<div style="padding:10px;margin:5px 0;background:rgba(255,255,255,0.1);border-radius:8px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+                        <span>${item.name}</span>
+                        <span style="color: ${isAdmin ? '#00ff00' : '#fff'};">${priceText}</span>
+                        <button onclick="buyItem('${item.type}')" style="background: ${isAdmin ? 'linear-gradient(145deg, #28a745, #20c997)' : 'linear-gradient(145deg, #007bff, #0056b3)'};">${buttonText}</button>
+                    </div>
+                    <div class="bulk-purchase">
+                        <span>批量购买:</span>
+                        <input type="number" class="bulk-input" id="bulk_${item.type}" min="1" max="100" value="1">
+                        <button class="bulk-btn" onclick="buyItemBulk('${item.type}')">购买</button>
+                    </div>
                 </div>`;
             });
             html += '</div>';
@@ -2745,13 +3215,12 @@
             shopContent.innerHTML = html;
         }
         
-        // 全局购买函数
-        window.buyItem = function(type) {
-            const item = availableItems.find(i => i.type === type);
-            
-            // 管理员账户免费使用道具
-            if (currentUsername === '000') {
-                // 管理员免费使用道具
+        // 使用道具函数
+        function useItem(type) {
+            if (itemCounts[type] > 0) {
+                itemCounts[type]--;
+                updateItemDisplay();
+                
                 switch(type) {
                     case 'shield':
                         shieldActive = true;
@@ -2767,7 +3236,35 @@
                         break;
                 }
                 
-                alert('管理员免费使用道具成功！');
+                console.log(`使用了${type}道具，剩余数量: ${itemCounts[type]}`);
+            }
+        }
+        
+        // 更新道具显示
+        function updateItemDisplay() {
+            const itemDisplay = document.getElementById('itemDisplay');
+            if (itemDisplay) {
+                itemDisplay.innerHTML = `
+                    <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                        <h3>道具库存</h3>
+                        <div>🛡️ 盾牌: ${itemCounts.shield} (按1使用)</div>
+                        <div>❤️ 回血: ${itemCounts.heal} (按2使用)</div>
+                        <div>⚡ 加速: ${itemCounts.speed} (按3使用)</div>
+                    </div>
+                `;
+            }
+        }
+        
+        // 全局购买函数
+        window.buyItem = function(type) {
+            const item = availableItems.find(i => i.type === type);
+            
+            // 管理员账户免费获取道具
+            if (currentUsername === '000') {
+                // 管理员免费获取道具
+                itemCounts[type]++;
+                updateItemDisplay();
+                alert('管理员免费获取道具成功！');
                 return;
             }
             
@@ -2786,22 +3283,57 @@
                 saveAccounts();
             }
             
-            switch(type) {
-                case 'shield':
-                    shieldActive = true;
-                    shieldTimer = 300;
-                    break;
-                case 'heal':
-                    playerHP = Math.min(playerHP + 1, maxHP);
-                    updateHPDisplay();
-                    break;
-                case 'speed':
-                    speedActive = true;
-                    speedTimer = 240;
-                    break;
-            }
+            // 积累道具而不是立即使用
+            itemCounts[type]++;
+            updateItemDisplay();
+            
+            console.log(`购买了${type}道具，当前数量: ${itemCounts[type]}`);
             
             alert(t('purchaseSuccess'));
+        };
+        
+        // 批量购买函数
+        window.buyItemBulk = function(type) {
+            const item = availableItems.find(i => i.type === type);
+            const bulkInput = document.getElementById(`bulk_${type}`);
+            const quantity = parseInt(bulkInput.value) || 1;
+            
+            if (quantity < 1 || quantity > 100) {
+                alert('购买数量必须在1-100之间');
+                return;
+            }
+            
+            // 管理员账户免费获取道具
+            if (currentUsername === '000') {
+                itemCounts[type] += quantity;
+                updateItemDisplay();
+                alert(`管理员免费获取${quantity}个${item.name}成功！`);
+                return;
+            }
+            
+            // 普通账户需要支付金币
+            const totalCost = item.price * quantity;
+            if (!item || gold < totalCost) {
+                alert(t('insufficientGold'));
+                return;
+            }
+            
+            gold -= totalCost;
+            updateGoldDisplay();
+            
+            // 保存用户数据
+            if (currentUsername && currentUsername !== '000') {
+                userAccounts[currentUsername].gold = gold;
+                saveAccounts();
+            }
+            
+            // 积累道具
+            itemCounts[type] += quantity;
+            updateItemDisplay();
+            
+            console.log(`批量购买了${quantity}个${type}道具，当前数量: ${itemCounts[type]}`);
+            
+            alert(`批量购买成功！获得${quantity}个${item.name}`);
         };
         
         // 购买皮肤
@@ -2863,6 +3395,9 @@
                 // 单人游戏循环
                 singlePlayerGameLoop();
             }
+            
+            // 在singlePlayerGameLoop最后一帧绘制后加
+            drawItemHUD();
         }
         
         // 单人游戏循环
@@ -2960,20 +3495,8 @@
             // 玩家吃到道具
             items = items.filter(item => {
                 if (item.active && rectsIntersect(player, item)) {
-                    switch(item.type) {
-                        case 'shield':
-                            shieldActive = true;
-                            shieldTimer = 300;
-                            break;
-                        case 'heal':
-                            playerHP = Math.min(playerHP + 1, maxHP);
-                            updateHPDisplay();
-                            break;
-                        case 'speed':
-                            speedActive = true;
-                            speedTimer = 240;
-                            break;
-                    }
+                    itemCounts[item.type]++;
+                    updateItemDisplay();
                     return false;
                 }
                 return true;
@@ -3013,30 +3536,58 @@
                 if (!enemy.alive) return;
                 enemy.update();
                 
-                // 随机旋转
-                if (frameCount % 60 === 0) {
-                    enemy.rotate((Math.random() - 0.5) * 0.5);
-                }
+                // 计算到玩家的距离和方向
+                const dx = player.x - enemy.x;
+                const dy = player.y - enemy.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const targetAngle = Math.atan2(dx, -dy);
                 
-                // 随机移动
+                // 智能瞄准玩家
                 if (frameCount % 30 === 0) {
-                    let moveDirection = Math.random();
-                    if (moveDirection < 0.25) {
-                        // 前进
-                        let dx = Math.sin(enemy.dir) * ENEMY_SPEED;
-                        let dy = -Math.cos(enemy.dir) * ENEMY_SPEED;
-                        enemy.move(dx, dy);
-                    } else if (moveDirection < 0.5) {
-                        // 后退
-                        let dx = -Math.sin(enemy.dir) * ENEMY_SPEED;
-                        let dy = Math.cos(enemy.dir) * ENEMY_SPEED;
-                        enemy.move(dx, dy);
+                    let angleDiff = targetAngle - enemy.dir;
+                    if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                    if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                    
+                    // 更快旋转
+                    if (Math.abs(angleDiff) > 0.1) {
+                        enemy.rotate(angleDiff * 0.6);
                     }
                 }
                 
-                if (frameCount % 120 === 0) {
-                    enemy.fire();
+                // 智能移动：接近玩家但保持距离
+                if (frameCount % 30 === 0) {
+                    const aiSpeed = ENEMY_SPEED * 1.5;
+                    if (distance > 150) {
+                        // 距离太远，接近玩家
+                        let dx = Math.sin(enemy.dir) * aiSpeed;
+                        let dy = -Math.cos(enemy.dir) * aiSpeed;
+                        enemy.move(dx, dy);
+                    } else if (distance < 80) {
+                        // 距离太近，后退
+                        let dx = -Math.sin(enemy.dir) * aiSpeed;
+                        let dy = Math.cos(enemy.dir) * aiSpeed;
+                        enemy.move(dx, dy);
+                    } else {
+                        // 在合适距离时，随机移动
+                        if (Math.random() < 0.3) {
+                            let dx = Math.sin(enemy.dir) * aiSpeed;
+                            let dy = -Math.cos(enemy.dir) * aiSpeed;
+                            enemy.move(dx, dy);
+                        }
+                    }
                 }
+                
+                // 智能射击：瞄准玩家时射击
+                if (frameCount % 60 === 0) {
+                    let angleDiff = Math.abs(targetAngle - enemy.dir);
+                    if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
+                    
+                    // 当瞄准角度小于30度时射击
+                    if (angleDiff < Math.PI / 6 && distance < 200) {
+                        enemy.fire();
+                    }
+                }
+                
                 enemy.draw();
             });
 
@@ -3278,20 +3829,8 @@
             // 玩家吃到道具
             items = items.filter(item => {
                 if (item.active && rectsIntersect(player, item)) {
-                    switch(item.type) {
-                        case 'shield':
-                            shieldActive = true;
-                            shieldTimer = 300;
-                            break;
-                        case 'heal':
-                            playerHP = Math.min(playerHP + 1, maxHP);
-                            updateHPDisplay();
-                            break;
-                        case 'speed':
-                            speedActive = true;
-                            speedTimer = 240;
-                            break;
-                    }
+                    itemCounts[item.type]++;
+                    updateItemDisplay();
                     return false;
                 }
                 return true;
@@ -3331,27 +3870,58 @@
                 if (!enemy.alive) return;
                 enemy.update();
                 
-                // 简单的AI行为
-                if (frameCount % 60 === 0) {
-                    enemy.rotate((Math.random() - 0.5) * 0.5);
-                }
+                // 计算到玩家的距离和方向
+                const dx = player.x - enemy.x;
+                const dy = player.y - enemy.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const targetAngle = Math.atan2(dx, -dy);
                 
+                // 智能瞄准玩家
                 if (frameCount % 30 === 0) {
-                    let moveDirection = Math.random();
-                    if (moveDirection < 0.25) {
-                        let dx = Math.sin(enemy.dir) * ENEMY_SPEED;
-                        let dy = -Math.cos(enemy.dir) * ENEMY_SPEED;
-                        enemy.move(dx, dy);
-                    } else if (moveDirection < 0.5) {
-                        let dx = -Math.sin(enemy.dir) * ENEMY_SPEED;
-                        let dy = Math.cos(enemy.dir) * ENEMY_SPEED;
-                        enemy.move(dx, dy);
+                    let angleDiff = targetAngle - enemy.dir;
+                    if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                    if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                    
+                    // 更快旋转
+                    if (Math.abs(angleDiff) > 0.1) {
+                        enemy.rotate(angleDiff * 0.6);
                     }
                 }
                 
-                if (frameCount % 120 === 0) {
-                    enemy.fire();
+                // 智能移动：接近玩家但保持距离
+                if (frameCount % 30 === 0) {
+                    const aiSpeed = ENEMY_SPEED * 1.5;
+                    if (distance > 150) {
+                        // 距离太远，接近玩家
+                        let dx = Math.sin(enemy.dir) * aiSpeed;
+                        let dy = -Math.cos(enemy.dir) * aiSpeed;
+                        enemy.move(dx, dy);
+                    } else if (distance < 80) {
+                        // 距离太近，后退
+                        let dx = -Math.sin(enemy.dir) * aiSpeed;
+                        let dy = Math.cos(enemy.dir) * aiSpeed;
+                        enemy.move(dx, dy);
+                    } else {
+                        // 在合适距离时，随机移动
+                        if (Math.random() < 0.3) {
+                            let dx = Math.sin(enemy.dir) * aiSpeed;
+                            let dy = -Math.cos(enemy.dir) * aiSpeed;
+                            enemy.move(dx, dy);
+                        }
+                    }
                 }
+                
+                // 智能射击：瞄准玩家时射击
+                if (frameCount % 60 === 0) {
+                    let angleDiff = Math.abs(targetAngle - enemy.dir);
+                    if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
+                    
+                    // 当瞄准角度小于30度时射击
+                    if (angleDiff < Math.PI / 6 && distance < 200) {
+                        enemy.fire();
+                    }
+                }
+                
                 enemy.draw(cameraX, cameraY);
             });
 
@@ -3399,21 +3969,10 @@
                             // 检查成就
                             checkAchievements();
                             
-                            // 生成新的AI敌人
-                            setTimeout(() => {
-                                let x, y;
-                                let attempts = 0;
-                                do {
-                                    x = Math.random() * (worldWidth - TANK_SIZE);
-                                    y = Math.random() * (worldHeight - TANK_SIZE);
-                                    attempts++;
-                                } while (
-                                    Math.abs(x - player.x) < 200 && 
-                                    Math.abs(y - player.y) < 200 && 
-                                    attempts < 50
-                                );
-                                enemies[idx] = new Tank(x, y, '#f00');
-                            }, 400);
+                                        // 生成新的AI敌人
+            setTimeout(() => {
+                spawnAI();
+            }, 400);
                         }
                     });
                 } else {
@@ -3498,6 +4057,9 @@
 
             frameCount++;
             requestAnimationFrame(gameLoop);
+            
+            // 在multiplayerGameLoop最后一帧绘制后加
+            drawItemHUD();
         }
         
         // 移动设备控制
@@ -3754,6 +4316,14 @@
             if (e.key === 'Escape' && isPointerLocked) {
                 document.exitPointerLock();
             }
+            
+            // B键打开商城
+            if (e.key.toLowerCase() === 'b' && gameState === 'playing') {
+                e.preventDefault();
+                renderShopPanel();
+                document.getElementById('shopPanel').classList.remove('hidden');
+                pause = true;
+            }
         });
         
         document.addEventListener('keyup', e => { 
@@ -3867,6 +4437,14 @@
                 // 限制鼠标位置在画布范围内
                 mouseX = Math.max(0, Math.min(WIDTH, mouseX));
                 mouseY = Math.max(0, Math.min(HEIGHT, mouseY));
+                
+                // 直接设置坦克朝向，更精确的瞄准
+                if (player) {
+                    let dx = mouseX - (player.x - cameraX + player.size/2);
+                    let dy = mouseY - (player.y - cameraY + player.size/2);
+                    let targetAngle = Math.atan2(dx, -dy);
+                    player.dir = targetAngle;
+                }
             }
         });
         
@@ -3874,13 +4452,52 @@
         mouseX = WIDTH / 2;
         mouseY = HEIGHT / 2;
         
-        // 按钮事件
-        document.getElementById('pauseBtn').onclick = () => {
-            pause = !pause;
-            document.getElementById('pauseBtn').textContent = pause ? t('continue') : t('pause');
-            if (!pause) requestAnimationFrame(gameLoop);
-        };
+        // 全屏切换函数
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                // 进入全屏
+                if (canvas.requestFullscreen) {
+                    canvas.requestFullscreen();
+                } else if (canvas.webkitRequestFullscreen) {
+                    canvas.webkitRequestFullscreen();
+                } else if (canvas.msRequestFullscreen) {
+                    canvas.msRequestFullscreen();
+                }
+            } else {
+                // 退出全屏
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
         
+        // 监听全屏状态变化
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('msfullscreenchange', handleFullscreenChange);
+        
+        function handleFullscreenChange() {
+            const isFullscreen = !!document.fullscreenElement || 
+                                !!document.webkitFullscreenElement || 
+                                !!document.msFullscreenElement;
+            
+            // 更新按钮文本
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
+            if (fullscreenBtn) {
+                fullscreenBtn.textContent = isFullscreen ? t('exitFullscreen') : t('fullscreen');
+            }
+            
+            // 重新调整画布尺寸
+            setTimeout(() => {
+                resizeCanvas();
+            }, 100);
+        }
+        
+        // 按钮事件
         document.getElementById('shopBtn').onclick = () => {
             renderShopPanel();
             document.getElementById('shopPanel').classList.remove('hidden');
@@ -3891,6 +4508,11 @@
             document.getElementById('shopPanel').classList.add('hidden');
             pause = false;
             requestAnimationFrame(gameLoop);
+        };
+        
+        // 全屏功能
+        document.getElementById('fullscreenBtn').onclick = () => {
+            toggleFullscreen();
         };
         
         document.getElementById('restartBtn').onclick = () => {
@@ -4125,7 +4747,7 @@
                 adminPrivilegesSection.innerHTML = `
                     <h2 style="color: #00ff00;">👑 管理员特权</h2>
                     <ul style="color: #00ff00;">
-                        <li>🔓 所有道具免费使用</li>
+                        <li>🔓 所有道具免费获取</li>
                         <li>🎯 左键持续发射（机枪模式）</li>
                         <li>💰 无限金币</li>
                         <li>🎨 所有皮肤已解锁</li>
@@ -4163,9 +4785,9 @@
             if (itemDescriptionList) {
                 if (isAdmin) {
                     itemDescriptionList.innerHTML = `
-                        <li style="color: #00ff00;">🛡️ 盾牌：无敌保护 (免费)</li>
-                        <li style="color: #00ff00;">❤️ 回血：恢复1点生命 (免费)</li>
-                        <li style="color: #00ff00;">⚡ 加速：提升移动速度 (免费)</li>
+                        <li style="color: #00ff00;">🛡️ 盾牌：无敌保护 (免费获取)</li>
+                        <li style="color: #00ff00;">❤️ 回血：恢复1点生命 (免费获取)</li>
+                        <li style="color: #00ff00;">⚡ 加速：提升移动速度 (免费获取)</li>
                     `;
                 } else {
                     itemDescriptionList.innerHTML = `
@@ -4184,6 +4806,185 @@
                 autoFireStatus.style.display = isActive ? 'inline-block' : 'none';
             }
         }
+        
+        // 2. useItem函数和快捷键监听
+        function useItem(type) {
+            if (itemCounts[type] > 0) {
+                itemCounts[type]--;
+                updateItemDisplay();
+                
+                // 道具使用特效
+                showItemUseEffect(type);
+                
+                switch(type) {
+                    case 'shield':
+                        shieldActive = true;
+                        shieldTimer = 300;
+                        break;
+                    case 'heal':
+                        playerHP = Math.min(playerHP + 1, maxHP);
+                        updateHPDisplay();
+                        break;
+                    case 'speed':
+                        speedActive = true;
+                        speedTimer = 240;
+                        break;
+                }
+                
+                console.log(`使用了${type}道具，剩余数量: ${itemCounts[type]}`);
+            }
+        }
+        
+        // 道具使用特效
+        function showItemUseEffect(type) {
+            const effect = document.createElement('div');
+            effect.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 48px;
+                font-weight: bold;
+                z-index: 10000;
+                pointer-events: none;
+                animation: itemEffect 1s ease-out forwards;
+            `;
+            
+            let text = '';
+            let color = '';
+            switch(type) {
+                case 'shield':
+                    text = '🛡️ 盾牌激活！';
+                    color = '#00ffff';
+                    break;
+                case 'heal':
+                    text = '❤️ 生命恢复！';
+                    color = '#ff69b4';
+                    break;
+                case 'speed':
+                    text = '⚡ 速度提升！';
+                    color = '#00ff00';
+                    break;
+            }
+            
+            effect.textContent = text;
+            effect.style.color = color;
+            effect.style.textShadow = '2px 2px 4px rgba(0,0,0,0.8)';
+            
+            document.body.appendChild(effect);
+            
+            // 1秒后移除特效
+            setTimeout(() => {
+                if (effect.parentNode) {
+                    effect.parentNode.removeChild(effect);
+                }
+            }, 1000);
+        }
+        window.addEventListener('keydown', function(e) {
+            if (e.key === '1') useItem('shield');
+            if (e.key === '2') useItem('heal');
+            if (e.key === '3') useItem('speed');
+        });
+        
+        // 3. drawItemHUD函数
+        function drawItemHUD() {
+            ctx.save();
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(WIDTH-180, 0, 180, 60);
+            ctx.fillStyle = '#fff';
+            ctx.fillText('🛡️x'+itemCounts.shield+'  ❤️x'+itemCounts.heal+'  ⚡x'+itemCounts.speed, WIDTH-10, 10);
+            ctx.font = '12px Arial';
+            ctx.fillText('1:盾  2:回血  3:加速', WIDTH-10, 35);
+            ctx.restore();
+        }
+        
+        // 在singlePlayerGameLoop和multiplayerGameLoop最后加 drawItemHUD();
+        // ... existing code ...
+
+        // WebSocket联机相关全局变量
+        let ws = null;
+        let myNetId = null;
+        let netPlayers = {};
+        let netBullets = [];
+        let netItems = [];
+        // ... existing code ...
+        // WebSocket联机相关：连接服务器
+        function connectWebSocket() {
+            ws = new WebSocket('ws://localhost:3001'); // 改为你的服务器地址
+            ws.onopen = () => { console.log('WebSocket connected'); };
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'init') {
+                    myNetId = data.id;
+                } else if (data.type === 'state') {
+                    netPlayers = {};
+                    data.players.forEach(p => { netPlayers[p.id] = p; });
+                    netBullets = data.bullets || [];
+                    netItems = data.items || [];
+                }
+            };
+            ws.onclose = () => { setTimeout(connectWebSocket, 2000); };
+        }
+        connectWebSocket();
+        // ... existing code ...
+        // 在multiplayerGameLoop和singlePlayerGameLoop主循环每帧同步本地状态
+        function syncWebSocketPlayer() {
+            if (ws && ws.readyState === 1 && myNetId) {
+                ws.send(JSON.stringify({
+                    type: 'update',
+                    player: {
+                        x: player.x, y: player.y, dir: player.dir, hp: playerHP, alive: player.alive, name: playerName
+                    },
+                    bullets: bullets.map(b => ({
+                        x: b.x, y: b.y, dx: b.dx, dy: b.dy, fromPlayer: b.fromPlayer, alive: b.alive
+                    })),
+                    items: items.map(i => ({
+                        x: i.x, y: i.y, type: i.type, active: i.active
+                    }))
+                }));
+            }
+        }
+        // ... existing code ...
+        // 在multiplayerGameLoop最后加：
+        syncWebSocketPlayer();
+        // 绘制其他玩家
+        Object.values(netPlayers).forEach(p => {
+            if (p.id !== myNetId && p.alive) {
+                ctx.save();
+                ctx.translate(p.x - cameraX + TANK_SIZE/2, p.y - cameraY + TANK_SIZE/2);
+                ctx.rotate(p.dir);
+                ctx.fillStyle = '#00bfff';
+                ctx.fillRect(-TANK_SIZE/2, -TANK_SIZE/2, TANK_SIZE, TANK_SIZE);
+                ctx.restore();
+                // 显示昵称
+                ctx.save();
+                ctx.fillStyle = '#00bfff';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(p.name || '玩家', p.x - cameraX + TANK_SIZE/2, p.y - cameraY - 10);
+                ctx.restore();
+            }
+        });
+        // 绘制同步的子弹
+        netBullets.forEach(b => {
+            ctx.save();
+            ctx.fillStyle = b.fromPlayer ? '#ff0' : '#f00';
+            ctx.fillRect(b.x - cameraX, b.y - cameraY, BULLET_SIZE, BULLET_SIZE);
+            ctx.restore();
+        });
+        // 绘制同步的道具
+        netItems.forEach(i => {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(i.x - cameraX + 16, i.y - cameraY + 16, 16, 0, 2*Math.PI);
+            ctx.fillStyle = i.type === 'shield' ? 'rgba(80,200,255,0.7)' : i.type === 'heal' ? 'rgba(255,80,80,0.7)' : 'rgba(80,255,120,0.7)';
+            ctx.fill();
+            ctx.restore();
+        });
+        // ... existing code ...
     </script>
 </body>
 </html> 
